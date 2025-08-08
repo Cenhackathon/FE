@@ -1,12 +1,14 @@
-import React from 'react';
+import React from "react";
 
-function WeatherCard({ weather }) {
-    return (
-        <div className="weather-card">
-            {/* 날씨 카드 내용 */}
-            <div className="weather-placeholder">날씨 정보 카드</div>
-        </div>
-    );
+export default function WeatherCard({ data }) {
+  return (
+    <div style={{ border: "1px solid #ccc", padding: "1rem", borderRadius: "8px" }}>
+      <h2>현재 날씨</h2>
+      <p>기온: {data.temperature}°C</p>
+      <p>체감 온도: </p>
+      <p>UV 지수: {data.uvIndex}</p>
+      <p>위험 수준: {data.riskLevel}</p>
+    </div>
+  );
 }
 
-export default WeatherCard;
