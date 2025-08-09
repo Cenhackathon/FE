@@ -10,7 +10,6 @@ src/
 ├── components/          # 재사용 가능한 UI 컴포넌트
 │   ├── common/          # 공통 버튼, 카드, 모달 등
 │   ├── map/             # 지도 관련 컴포넌트
-│   ├── complaint/       # 민원 관련 UI
 │   ├── traffic/         # 교통 데이터 관련 UI
 │   ├── weather/         # 날씨 관련 UI
 │   ├── chatbot/         # 챗봇 UI
