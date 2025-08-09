@@ -480,27 +480,52 @@
 }
 
 /* Traffic Card */
-.traffic-chart {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
+.traffic-content {
+  display:flex;
+  gap: 28px;
+  padding: 26px;
+  align-items:flex-start;
 }
 
-.traffic-graph {
-    flex: 1;
-    display: flex;
-    align-items: center;
+.traffic-left { 
+    flex: 1.2; min-width: 240px; 
 }
 
-.chart-svg {
-    width: 100%;
-    height: 100px;
+.traffic-right { 
+    flex: 1; min-width: 220px; 
 }
 
-.traffic-legend {
-    margin-top: 10px;
-    font-size: 0.8rem;
+.traffic-section-title h4 {
+  margin:0 0 10px 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+  width: 200px;
+  border: solid;
+}
+
+.traffic-list {
+  list-style: none;
+  padding:0;
+  margin: 6px 0 12px 0;
+}
+.traffic-item {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:8px 0;
+  font-size: 1.02rem;
+  color: #2b2b3a;
+}
+.traffic-item .num {
+  width:28px;
+  font-weight:800;
+}
+
+.prediction-text {
+  color: var(--muted);
+  margin: 0 0 14px 0;
+  line-height: 1.5;
 }
 
 /* Weather Card */
