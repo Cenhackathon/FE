@@ -7,25 +7,25 @@ function CommunityPage() {
     const [posts, setPosts] = useState([
         {
             id: 1,
-            title: '강남구 교통 상황 문의',
-            content: '강남구 일대 교통 정체가 심한데 개선 방안이 있을까요?',
+            title: '동대문구 교통 상황 문의',
+            content: '외대앞역 일대 교통 정체가 심합니다.',
             author: '시민123',
             time: '2분 전',
             likes: 15,
             comments: 3,
             category: '교통',
-            location: '강남구 역삼동',
+            location: '외대앞역',
         },
         {
             id: 2,
             title: '도로 파손 신고합니다',
-            content: '서초구 일대 도로에 큰 구멍이 생겼는데 빠른 수리 부탁드립니다.',
+            content: '청량리역 일대 도로에 큰 구멍이 생겼는데 빠른 수리 부탁드립니다.',
             author: '안전지킴이',
             time: '15분 전',
             likes: 28,
             comments: 7,
             category: '민원',
-            location: '서초구 서초동',
+            location: '청량리역',
         },
         {
             id: 3,
@@ -36,7 +36,7 @@ function CommunityPage() {
             likes: 23,
             comments: 12,
             category: '지역정보',
-            location: '한강공원 일대',
+            location: '서울시 동대문구 제기동',
         },
     ]);
 

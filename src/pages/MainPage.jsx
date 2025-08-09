@@ -9,6 +9,10 @@ function MainPage() {
         navigate('/community');
     };
 
+    const handleChatbotClick = () => {
+        navigate('/chatbot');
+    };
+
     return (
         <div className="main-page">
             {/* Header with Navigation */}
@@ -52,7 +56,11 @@ function MainPage() {
                     {/* Right Side Panels */}
                     <aside className="side-panels">
                         {/* Chatbot Section */}
-                        <section className="panel chatbot-panel">
+                        <section
+                            className="panel chatbot-panel"
+                            onClick={handleChatbotClick}
+                            style={{ cursor: 'pointer' }}
+                        >
                             <div className="panel-header">
                                 <h3>Chatbot</h3>
                                 <div className="panel-controls">
@@ -99,7 +107,7 @@ function MainPage() {
                                     </div>
                                     <div className="recent-posts">
                                         <div className="post-item">
-                                            <span className="post-title">강남구 교통 상황 문의</span>
+                                            <span className="post-title">동대문구 교통 상황 문의</span>
                                             <span className="post-time">2분 전</span>
                                         </div>
                                         <div className="post-item">
