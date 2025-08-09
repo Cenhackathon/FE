@@ -2,7 +2,6 @@
 
 export const ROUTES = {
     HOME: '/',
-    COMPLAINT: '/complaint',
     TRAFFIC: '/traffic',
     WEATHER: '/weather',
     COMMUNITY: '/community',

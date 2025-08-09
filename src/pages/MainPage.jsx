@@ -1,10 +1,18 @@
 import { useNavigate } from "react-router-dom"
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../styles/MainPage.css';
 
 function MainPage() {
     const navigate = useNavigate();
 
+    const handleCommunityClick = () => {
+        navigate('/community');
+    };
+
+    const handleChatbotClick = () => {
+        navigate('/chatbot');
+    };
     return (
         <div className="main-page">
             {/* Header with Navigation */}
@@ -48,10 +56,11 @@ function MainPage() {
                     {/* Right Side Panels */}
                     <aside className="side-panels">
                         {/* Chatbot Section */}
-                        <section 
+
+                        <section
                             className="panel chatbot-panel"
-                            style = {{ cursor: "pointer" }}
-                            onClick={() => navigate("/chatbot")}
+                            onClick={handleChatbotClick}
+                            style={{ cursor: 'pointer' }}
                         >
                             <div className="panel-header">
                                 <h3>Chatbot</h3>
@@ -74,10 +83,10 @@ function MainPage() {
                         </section>
 
                         {/* Community Section */}
-                        <section 
+                        <section
                             className="panel community-panel"
-                            style={{ cursor: "pointer" }}
-                            onClick={() => navigate("/community")}
+                            onClick={handleCommunityClick}
+                            style={{ cursor: 'pointer' }}
                         >
                             <div className="panel-header">
                                 <h3>Community</h3>
@@ -99,7 +108,7 @@ function MainPage() {
                                     </div>
                                     <div className="recent-posts">
                                         <div className="post-item">
-                                            <span className="post-title">강남구 교통 상황 문의</span>
+                                            <span className="post-title">동대문구 교통 상황 문의</span>
                                             <span className="post-time">2분 전</span>
                                         </div>
                                         <div className="post-item">
@@ -115,7 +124,6 @@ function MainPage() {
 
                 {/* Bottom Row - Three Cards */}
                 <div className="bottom-row">
-
                     {/* Traffic Card */}
                     <section 
                         className="bottom-card traffic-card"
