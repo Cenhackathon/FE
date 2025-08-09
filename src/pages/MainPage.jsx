@@ -1,7 +1,10 @@
+import { useNavigate } from "react-router-dom"
 import React from 'react';
 import '../styles/MainPage.css';
 
 function MainPage() {
+    const navigate = useNavigate();
+
     return (
         <div className="main-page">
             {/* Header with Navigation */}
@@ -45,7 +48,11 @@ function MainPage() {
                     {/* Right Side Panels */}
                     <aside className="side-panels">
                         {/* Chatbot Section */}
-                        <section className="panel chatbot-panel">
+                        <section 
+                            className="panel chatbot-panel"
+                            style = {{ cursor: "pointer" }}
+                            onClick={() => navigate("/chatbot")}
+                        >
                             <div className="panel-header">
                                 <h3>Chatbot</h3>
                                 <div className="panel-controls">
@@ -67,7 +74,11 @@ function MainPage() {
                         </section>
 
                         {/* Community Section */}
-                        <section className="panel community-panel">
+                        <section 
+                            className="panel community-panel"
+                            style={{ cursor: "pointer" }}
+                            onClick={() => navigate("/community")}
+                        >
                             <div className="panel-header">
                                 <h3>Community</h3>
                                 <div className="panel-controls">
@@ -106,44 +117,43 @@ function MainPage() {
                 <div className="bottom-row">
 
                     {/* Traffic Card */}
-                    <section className="bottom-card traffic-card">
-                        <div className="card-header">
-                            <h3>TRAFFIC</h3>
-                            <span className="status-indicator">Real Real Time</span>
-                        </div>
-                        <div className="card-content">
-                            <div className="traffic-chart">
-                                <div className="traffic-graph">
-                                    <svg viewBox="0 0 300 150" className="chart-svg">
-                                        <path
-                                            d="M 20 120 Q 50 100 80 110 T 140 90 T 200 100 T 280 80"
-                                            stroke="#FFB74D"
-                                            strokeWidth="3"
-                                            fill="none"
-                                        />
-                                        <path
-                                            d="M 20 100 Q 50 80 80 85 T 140 70 T 200 75 T 280 60"
-                                            stroke="#42A5F5"
-                                            strokeWidth="3"
-                                            fill="none"
-                                        />
-                                        <path
-                                            d="M 20 130 Q 50 110 80 120 T 140 100 T 200 110 T 280 90"
-                                            stroke="#66BB6A"
-                                            strokeWidth="2"
-                                            fill="none"
-                                        />
-                                    </svg>
-                                </div>
-                                <div className="traffic-legend">
-                                    <span style={{ color: '#FFB74D' }}>● XXX DAERO</span>
-                                </div>
+                    <section 
+                        className="bottom-card traffic-card"
+                        style={{ cursor: "pointer" }}
+                        onClick={() => navigate("/traffic")}
+                    >
+                    <div className="card-header">
+                        <h3>TRAFFIC</h3>
+                    </div>
+
+                    <div className="traffic-content">
+                        <div className="traffic-left">
+                            <div className="traffic-section-title">
+                                <h4>교통 혼잡도 TOP3</h4>
                             </div>
+
+                            <ol className="traffic-list">
+                                <li className="traffic-item">1. 이문동 </li>
+                                <li className="traffic-item">2. 회기동 </li>
+                                <li className="traffic-item">3. 휘경동 </li>
+                            </ol>
                         </div>
+
+                        <div className="traffic-right">
+                            <div className="traffic-section-title">
+                                <h4>예측 데이터</h4>
+                            </div>
+                            <p className="prediction-text">도로 혼잡 예상 구간: 청량리역, 장안동 사거리</p>
+                        </div>
+                    </div>
                     </section>
 
                     {/* Weather Card */}
-                    <section className="bottom-card weather-card">
+                    <section 
+                        className="bottom-card weather-card"
+                        style={{ cursor: "pointer" }}
+                        onClick={() => navigate("/weather")}
+                    >
                         <div className="card-header">
                             <h3>WEATHER</h3>
                         </div>

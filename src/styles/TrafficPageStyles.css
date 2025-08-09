@@ -1,0 +1,138 @@
+.traffic-page-container {
+    display: flex;
+    height: 100vh;
+    background: linear-gradient(135deg, #635fad, #8c7bcb);
+    color: #fff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.map-placeholder {
+    flex: 1;
+    background-color: #eeeefb;
+    border-radius: 14px;
+    margin: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1e1e2f;
+    font-weight: 600;
+    font-size: 1.2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    position: relative;
+    height: auto;
+}
+
+.map-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* 혹은 cover로 필요에 맞게 */
+  display: block;
+}
+
+.sidebar {
+    width: 23rem;
+    background-color: #eeeefb;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    padding: 1.5rem;
+    margin: 1rem;
+    border-radius: 14px;
+    color: #1e1e2f;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.sidebar h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #333366;
+}
+
+.sidebar h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+    color: #555577;
+}
+
+.legend-list {
+    margin-bottom: 1.5rem;
+}
+
+.legend-list li {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.1rem;
+    font-weight: 600;
+    color: #4b4b7c;
+}
+
+.color-box {
+    width: 1.2rem;
+    height: 1.2rem;
+    display: inline-block;
+    margin-right: 0.75rem;
+    border-radius: 3px;
+}
+
+.red-box {
+    background-color: #ef4444;
+}
+
+.yellow-box {
+    background-color: #fcd34d;
+}
+
+.green-box {
+    background-color: #10b981;
+}
+
+.prediction-text {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    color: #444466;
+}
+
+.alert-box-red {
+    background-color: #fee2e2;
+    border-left: 4px solid #ef4444;
+    padding: 0.6rem;
+    font-size: 0.9rem;
+    margin-bottom: 0.4rem;
+    border-radius: 6px;
+}
+
+.alert-box-yellow {
+    background-color: #fcd34d50;
+    border-left: 4px solid #fcd34d;
+    padding: 0.6rem;
+    font-size: 0.9rem;
+    margin-bottom: 0.4rem;
+    border-radius: 6px;
+}
+
+/* 상단 우측 버튼 스타일 */
+.top-right-buttons {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    gap: 0.8rem;
+}
+
+.top-right-button {
+    background: linear-gradient(135deg, #817fc1, #564fa3);
+    border: none;
+    border-radius: 20px;
+    color: #e3e3ff;
+    padding: 0.5rem 1.2rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(86, 79, 163, 0.6);
+    transition: background 0.3s ease;
+}
+
+.top-right-button:hover {
+    background: linear-gradient(135deg, #564fa3, #817fc1);
+}
