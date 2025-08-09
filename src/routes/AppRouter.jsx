@@ -1,7 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import MainPage from '../pages/MainPage';
-import ComplaintPage from '../pages/ComplaintPage';
 import TrafficPage from '../pages/TrafficPage';
 import WeatherPage from '../pages/WeatherPage';
 import CommunityPage from '../pages/CommunityPage';
@@ -11,7 +10,6 @@ function AppRouter() {
     return (
         <Routes>
             <Route path="/" element={<MainPage />} />
-            <Route path="/complaint" element={<ComplaintPage />} />
             <Route path="/traffic" element={<TrafficPage />} />
             <Route path="/weather" element={<WeatherPage />} />
             <Route path="/community" element={<CommunityPage />} />

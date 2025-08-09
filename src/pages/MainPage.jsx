@@ -1,7 +1,14 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../styles/MainPage.css';
 
 function MainPage() {
+    const navigate = useNavigate();
+
+    const handleCommunityClick = () => {
+        navigate('/community');
+    };
+
     return (
         <div className="main-page">
             {/* Header with Navigation */}
@@ -67,7 +74,11 @@ function MainPage() {
                         </section>
 
                         {/* Community Section */}
-                        <section className="panel community-panel">
+                        <section
+                            className="panel community-panel"
+                            onClick={handleCommunityClick}
+                            style={{ cursor: 'pointer' }}
+                        >
                             <div className="panel-header">
                                 <h3>Community</h3>
                                 <div className="panel-controls">
@@ -104,7 +115,6 @@ function MainPage() {
 
                 {/* Bottom Row - Three Cards */}
                 <div className="bottom-row">
-
                     {/* Traffic Card */}
                     <section className="bottom-card traffic-card">
                         <div className="card-header">
