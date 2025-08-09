@@ -9,7 +9,7 @@ function CommunityPage() {
             id: 1,
             title: '강남구 교통 상황 문의',
             content: '강남구 일대 교통 정체가 심한데 개선 방안이 있을까요?',
-            author: '시민123',
+            author: '시민1234',
             time: '2분 전',
             likes: 15,
             comments: 3,
