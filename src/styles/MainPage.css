@@ -481,51 +481,49 @@
 
 /* Traffic Card */
 .traffic-content {
-  display:flex;
-  gap: 28px;
-  padding: 26px;
-  align-items:flex-start;
+  display: flex;
+  gap: 20px;
+  padding: 35px;
+  background-color: white;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-.traffic-left { 
-    flex: 1.2; min-width: 240px; 
-}
-
-.traffic-right { 
-    flex: 1; min-width: 220px; 
+.traffic-left,
+.traffic-right {
+  flex: 1;
+  background-color: #f3e8ff; /* 연보라색 */
+  padding: 16px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .traffic-section-title h4 {
-  margin:0 0 10px 0;
   font-size: 1rem;
-  font-weight: 700;
-  color: #111827;
-  width: 200px;
-  border: solid;
+  font-weight: bold;
+  color: #5b21b6;
+  margin-bottom: 8px;
 }
 
 .traffic-list {
   list-style: none;
-  padding:0;
-  margin: 6px 0 12px 0;
+  padding: 0;
+  margin: 0;
 }
+
 .traffic-item {
-  display:flex;
-  align-items:center;
-  gap:12px;
-  padding:8px 0;
-  font-size: 1.02rem;
-  color: #2b2b3a;
-}
-.traffic-item .num {
-  width:28px;
-  font-weight:800;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #333;
 }
 
 .prediction-text {
-  color: var(--muted);
-  margin: 0 0 14px 0;
+  font-size: 0.95rem;
   line-height: 1.5;
+  color: #333;
 }
 
 /* Weather Card */
