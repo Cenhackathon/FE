@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom"
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/MainPage.css';
@@ -122,11 +121,11 @@ function MainPage() {
                     </aside>
                 </div>
 
-                {/* Bottom Row - Three Cards */}
+                {/* Bottom Row - Two Cards*/} 
                 <div className="bottom-row">
-                    {/* Traffic Card */}
+                    {/* Traffic Card / bottom-card traffic-card*/}
                     <section 
-                        className="bottom-card traffic-card"
+                        className="panel chatbot-panel"
                         style={{ cursor: "pointer" }}
                         onClick={() => navigate("/traffic")}
                     >
@@ -149,9 +148,9 @@ function MainPage() {
 
                         <div className="traffic-right">
                             <div className="traffic-section-title">
-                                <h4>예측 데이터</h4>
+                                <h4>혼잡 예상 구간</h4>
                             </div>
-                            <p className="prediction-text">도로 혼잡 예상 구간: 청량리역, 장안동 사거리</p>
+                            <p className="prediction-text">청량리역, 장안동 사거리</p>
                         </div>
                     </div>
                     </section>
