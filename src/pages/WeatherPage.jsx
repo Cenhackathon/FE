@@ -1,29 +1,8 @@
-/*import React from 'react';
-
-export default function WeatherPage() {
-    return (
-        <div className="weather-page">
-            <h1>Weather</h1>
-            <div className="temperature">
-                <h2>동대문구 기온</h2>
-                <p>30.9</p>
-                <p>체감(30.9)</p>
-                <p>자외선 지수</p>
-                <p>일사량</p>
-                <p>지면 온도</p>
-            </div>
-            <div className="shelter">
-                <h2>동대문구 쉼터 추천</h2>
-                <p></p>
-            </div>
-        </div>
-    );
-}*/
-
 import React from "react";
 import WeatherCard from "../components/weather/WeatherCard";
 import MapView from "../components/weather/MapView";
 import ShelterList from "../components/weather/ShelterList";
+import "../styles/WeatherPage.css";
 
 export default function WeatherPage() {
   const mockWeather = {
@@ -38,16 +17,36 @@ export default function WeatherPage() {
   ];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "1rem", padding: "1rem" }}>
-      
-      <WeatherCard data={mockWeather} />
+    <div className="weatherpage">
+    <header className="header">
+                <div className="header-left">
+                    <h1 className="title">Seoul AI 상황실</h1>
+                </div>
+                <nav className="nav-bar">
+                    <button className="nav-btn">Dashboard</button>
+                    <button className="nav-btn">Analytics</button>
+                    <button className="nav-btn">Reports</button>
+                    <button className="nav-btn">Settings</button>
+                </nav>
+    </header>
 
+    <div className="weather-page-container">
+      <div className="main-content">
+        <div className="map-view-section">
+          <MapView />
+          </div>
       
-      <MapView />
-
-      
-      <ShelterList shelters={mockShelters} />
-    </div>
+        <div className="side-panel">
+          <div className="top-card">
+            <WeatherCard data={mockWeather} />
+          </div>
+          <div className="bottom-list">
+            <ShelterList shelters={mockShelters} />
+          </div>
+        </div>
+      </div>
+    </div> 
+    </div> 
   );
 }
 

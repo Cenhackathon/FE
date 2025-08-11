@@ -1,7 +1,14 @@
 import React from 'react';
 import '../styles/MainPage.css';
+import { useNavigate } from 'react-router-dom'
 
 function MainPage() {
+    const navigate = useNavigate();
+
+    const handleWeatherClick = () => {
+        navigate('/weather');
+    };
+
     return (
         <div className="main-page">
             {/* Header with Navigation */}
@@ -143,7 +150,10 @@ function MainPage() {
                     </section>
 
                     {/* Weather Card */}
-                    <section className="bottom-card weather-card">
+                    <section 
+                        className="bottom-card weather-card"
+                        onClick={handleWeatherClick}
+                    >
                         <div className="card-header">
                             <h3>WEATHER</h3>
                         </div>
