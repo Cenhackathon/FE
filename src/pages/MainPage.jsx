@@ -125,45 +125,45 @@ function MainPage() {
                     </aside>
                 </div>
 
-                {/* Bottom Row - Two Cards*/} 
+                {/* Bottom Row - Two Cards*/}
                 <div className="bottom-row">
                     {/* Traffic Card / bottom-card traffic-card*/}
-                    <section 
+                    <section
                         className="panel chatbot-panel"
-                        style={{ cursor: "pointer" }}
-                        onClick={() => navigate("/traffic")}
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => navigate('/traffic')}
                     >
-                    <div className="card-header">
-                        <h3>TRAFFIC</h3>
-                    </div>
-
-                    <div className="traffic-content">
-                        <div className="traffic-left">
-                            <div className="traffic-section-title">
-                                <h4>교통 혼잡도 TOP3</h4>
-                            </div>
-
-                            <ol className="traffic-list">
-                                <li className="traffic-item">1. 이문동 </li>
-                                <li className="traffic-item">2. 회기동 </li>
-                                <li className="traffic-item">3. 휘경동 </li>
-                            </ol>
+                        <div className="card-header">
+                            <h3>TRAFFIC</h3>
                         </div>
 
-                        <div className="traffic-right">
-                            <div className="traffic-section-title">
-                                <h4>혼잡 예상 구간</h4>
+                        <div className="traffic-content">
+                            <div className="traffic-left">
+                                <div className="traffic-section-title">
+                                    <h4>교통 혼잡도 TOP3</h4>
+                                </div>
+
+                                <ol className="traffic-list">
+                                    <li className="traffic-item">1. 이문동 </li>
+                                    <li className="traffic-item">2. 회기동 </li>
+                                    <li className="traffic-item">3. 휘경동 </li>
+                                </ol>
                             </div>
-                            <p className="prediction-text">청량리역, 장안동 사거리</p>
+
+                            <div className="traffic-right">
+                                <div className="traffic-section-title">
+                                    <h4>혼잡 예상 구간</h4>
+                                </div>
+                                <p className="prediction-text">청량리역, 장안동 사거리</p>
+                            </div>
                         </div>
-                    </div>
                     </section>
 
                     {/* Weather Card */}
-                    <section 
+                    <section
                         className="bottom-card weather-card"
                         onClick={handleWeatherClick}
-                        style={{ cursor: "pointer" }}
+                        style={{ cursor: 'pointer' }}
                     >
                         <div className="card-header">
                             <h3>WEATHER</h3>
