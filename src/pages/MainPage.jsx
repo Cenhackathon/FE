@@ -12,6 +12,10 @@ function MainPage() {
     const handleChatbotClick = () => {
         navigate('/chatbot');
     };
+
+    const handleWeatherClick = () => {
+        navigate('/weather');
+    };
     return (
         <div className="main-page">
             {/* Header with Navigation */}
@@ -158,8 +162,8 @@ function MainPage() {
                     {/* Weather Card */}
                     <section 
                         className="bottom-card weather-card"
+                        onClick={handleWeatherClick}
                         style={{ cursor: "pointer" }}
-                        onClick={() => navigate("/weather")}
                     >
                         <div className="card-header">
                             <h3>WEATHER</h3>
