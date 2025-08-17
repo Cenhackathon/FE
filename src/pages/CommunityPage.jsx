@@ -1,44 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import LoginModal from '../components/auth/LoginModal';
+import RegisterModal from '../components/auth/RegisterModal';
 import '../styles/CommunityPage.css';
 
 function CommunityPage() {
     const navigate = useNavigate();
-    const [posts, setPosts] = useState([
-        {
-            id: 1,
-            title: '동대문구 교통 상황 문의',
-            content: '외대앞역 일대 교통 정체가 심합니다.',
-            author: '시민123',
-            time: '2분 전',
-            likes: 15,
-            comments: 3,
-            category: '교통',
-            location: '외대앞역',
-        },
-        {
-            id: 2,
-            title: '도로 파손 신고합니다',
-            content: '청량리역 일대 도로에 큰 구멍이 생겼는데 빠른 수리 부탁드립니다.',
-            author: '안전지킴이',
-            time: '15분 전',
-            likes: 28,
-            comments: 7,
-            category: '민원',
-            location: '청량리역',
-        },
-        {
-            id: 3,
-            title: '서울시 공원 정보 공유',
-            content: '가족과 함께 갈 수 있는 좋은 공원 정보를 공유합니다.',
-            author: '공원러버',
-            time: '1시간 전',
-            likes: 23,
-            comments: 12,
-            category: '지역정보',
-            location: '서울시 동대문구 제기동',
-        },
-    ]);
+    const [posts, setPosts] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
     const [newPost, setNewPost] = useState({
         title: '',
@@ -52,8 +22,165 @@ function CommunityPage() {
     const [sortBy, setSortBy] = useState('latest'); // 'latest' or 'likes'
     const [activeCategory, setActiveCategory] = useState('전체');
 
+    // 인증 관련 상태
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [currentUser, setCurrentUser] = useState(null);
+    const [showLoginModal, setShowLoginModal] = useState(false);
+    const [showRegisterModal, setShowRegisterModal] = useState(false);
+
+    // 컴포넌트 마운트시 로그인 상태 확인 및 게시물 로드
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        const username = localStorage.getItem('username');
+
+        if (token && username) {
+            setIsAuthenticated(true);
+            setCurrentUser({ username, token });
+        }
+
+        // 게시물 목록 로드
+        loadPosts();
+    }, []);
+
+    // 정렬이나 카테고리가 변경될 때 게시물 다시 로드
+    useEffect(() => {
+        loadPosts();
+    }, [sortBy, activeCategory]);
+
+    // 게시물 목록 로드 함수
+    const loadPosts = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const baseUrl = 'http://127.0.0.1:8000';
+            const orderBy = sortBy === 'latest' ? 'created_at' : 'likes'; // API 명세에 맞는 정렬 파라미터
+            const categoryParam = activeCategory === '전체' ? '' : `/${getCategoryAPIValue(activeCategory)}`;
+
+            const response = await fetch(`${baseUrl}/community/list/${orderBy}${categoryParam}/`);
+
+            if (response.ok) {
+                const data = await response.json();
+                // API 응답 데이터를 UI 형태로 변환
+                const transformedPosts = data.map((post) => ({
+                    id: post.post_id,
+                    title: post.title,
+                    content: post.content,
+                    author: post.author,
+                    time: formatTime(post.created_at),
+                    likes: post.likes,
+                    comments: post.comments?.length || 0,
+                    category: getCategoryUIValue(post.category),
+                    location: post.location,
+                    latitude: post.latitude,
+                    longitude: post.longitude,
+                    images: post.image_url ? [post.image_url] : [],
+                }));
+                setPosts(transformedPosts);
+            } else {
+                throw new Error('게시물 로드 실패');
+            }
+        } catch (error) {
+            console.error('게시물 로드 실패:', error);
+            setError('게시물을 불러오는데 실패했습니다.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // 카테고리 UI값을 API값으로 변환
+    const getCategoryAPIValue = (uiCategory) => {
+        const map = { 교통: 'general', 민원: 'emergency', 지역정보: 'notice' };
+        return map[uiCategory] || 'general';
+    };
+
+    // 카테고리 API값을 UI값으로 변환
+    const getCategoryUIValue = (apiCategory) => {
+        const map = { general: '교통', emergency: '민원', notice: '지역정보' };
+        return map[apiCategory] || '교통';
+    };
+
+    // 좋아요 토글 함수
+    const handleLikeToggle = async (postId) => {
+        if (!isAuthenticated) {
+            alert('로그인이 필요합니다.');
+            setShowLoginModal(true);
+            return;
+        }
+
+        try {
+            const baseUrl = 'http://127.0.0.1:8000';
+            const response = await fetch(`${baseUrl}/community/${postId}/likes`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Token ${currentUser?.token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                // 좋아요 처리 후 게시물 목록 새로고침
+                await loadPosts();
+            } else {
+                throw new Error('좋아요 처리 실패');
+            }
+        } catch (error) {
+            console.error('좋아요 처리 실패:', error);
+            alert('좋아요 처리에 실패했습니다.');
+        }
+    };
+
+    // 시간 포맷팅 함수
+    const formatTime = (dateString) => {
+        const now = new Date();
+        const postTime = new Date(dateString);
+        const diffMs = now - postTime;
+        const diffMins = Math.floor(diffMs / 60000);
+
+        if (diffMins < 1) return '방금 전';
+        if (diffMins < 60) return `${diffMins}분 전`;
+        if (diffMins < 1440) return `${Math.floor(diffMins / 60)}시간 전`;
+        return `${Math.floor(diffMins / 1440)}일 전`;
+    };
     const handleBack = () => {
         navigate('/');
+    };
+
+    // 인증 관련 핸들러
+    const handleNewPostClick = () => {
+        if (!isAuthenticated) {
+            setShowLoginModal(true);
+        } else {
+            setShowPostForm(true);
+        }
+    };
+
+    const handleLoginSuccess = (userData) => {
+        setIsAuthenticated(true);
+        setCurrentUser(userData);
+        setShowLoginModal(false);
+        setShowPostForm(true); // 로그인 성공 후 바로 글쓰기 폼 열기
+    };
+
+    const handleRegisterSuccess = () => {
+        // 회원가입 성공 후 로직 (필요시 추가)
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('username');
+        setIsAuthenticated(false);
+        setCurrentUser(null);
+        setShowPostForm(false);
+    };
+
+    const handleSwitchToLogin = () => {
+        setShowRegisterModal(false);
+        setShowLoginModal(true);
+    };
+
+    const handleSwitchToRegister = () => {
+        setShowLoginModal(false);
+        setShowRegisterModal(true);
     };
 
     const handleLocationTypeChange = (type) => {
@@ -64,23 +191,69 @@ function CommunityPage() {
         }
     };
 
-    const handleSubmitPost = (e) => {
+    const handleSubmitPost = async (e) => {
         e.preventDefault();
-        if (newPost.title && newPost.content && newPost.location) {
-            const post = {
-                id: posts.length + 1,
+        if (!newPost.title || !newPost.content || !newPost.location) {
+            alert('모든 필드를 입력해주세요.');
+            return;
+        }
+
+        if (!isAuthenticated) {
+            alert('로그인이 필요합니다.');
+            setShowLoginModal(true);
+            return;
+        }
+
+        try {
+            // TODO: 백엔드 배포시 실제 API URL로 교체
+            const baseUrl = 'http://127.0.0.1:8000';
+
+            // API 명세서에 따른 카테고리 매핑
+            const categoryMap = {
+                교통: 'general',
+                민원: 'emergency',
+                지역정보: 'notice',
+            };
+
+            const postData = {
                 title: newPost.title,
                 content: newPost.content,
-                author: '새로운사용자',
-                time: '방금 전',
-                likes: 0,
-                comments: 0,
-                category: newPost.category,
+                category: categoryMap[newPost.category] || 'general',
+                latitude: 37.5665, // TODO: 실제 위치 정보로 교체
+                longitude: 126.978, // TODO: 실제 위치 정보로 교체
                 location: newPost.location,
             };
-            setPosts([post, ...posts]);
-            setNewPost({ title: '', content: '', category: '교통', location: '', locationType: 'current' });
-            setShowPostForm(false);
+
+            const response = await fetch(`${baseUrl}/community/upload/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Token ${currentUser?.token}`,
+                },
+                body: JSON.stringify(postData),
+            });
+
+            if (response.ok) {
+                // 게시물 작성 성공 후 목록 새로고침
+                await loadPosts();
+                setNewPost({
+                    title: '',
+                    content: '',
+                    category: '교통',
+                    location: '',
+                    locationType: 'current',
+                    images: [],
+                    imagePreviewUrls: [],
+                });
+                setShowPostForm(false);
+                alert('게시물이 성공적으로 작성되었습니다!');
+            } else {
+                const errorData = await response.json();
+                alert(errorData.message || '게시물 작성에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('Post creation error:', error);
+            alert('네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
         }
     };
 
@@ -123,9 +296,28 @@ function CommunityPage() {
                     </button>
                     <h1 className="page-title">Seoul AI 커뮤니티</h1>
                 </div>
-                <button className="new-post-btn" onClick={() => setShowPostForm(true)}>
-                    + 새 글 작성
-                </button>
+                <div className="header-right">
+                    {isAuthenticated ? (
+                        <div className="user-info">
+                            <span className="welcome-text">안녕하세요, {currentUser?.username}님</span>
+                            <button className="new-post-btn" onClick={handleNewPostClick}>
+                                + 새 글 작성
+                            </button>
+                            <button className="logout-btn" onClick={handleLogout}>
+                                로그아웃
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="auth-buttons">
+                            <button className="login-btn" onClick={() => setShowLoginModal(true)}>
+                                로그인
+                            </button>
+                            <button className="new-post-btn" onClick={handleNewPostClick}>
+                                + 새 글 작성
+                            </button>
+                        </div>
+                    )}
+                </div>
             </header>
 
             <div className="community-content">
@@ -286,31 +478,63 @@ function CommunityPage() {
                     </div>
 
                     <div className="posts-list">
-                        {getSortedAndFilteredPosts().map((post) => (
-                            <div key={post.id} className="post-card">
-                                <div className="post-header">
-                                    <span className={`category-tag ${post.category}`}>{post.category}</span>
-                                    <span className="post-time">{post.time}</span>
-                                </div>
-                                <h3 className="post-title">{post.title}</h3>
-                                <p className="post-content">{post.content}</p>
-                                <div className="post-location">📍 {post.location}</div>
-                                <div className="post-footer">
-                                    <div className="post-author">
-                                        <span className="author-icon">👤</span>
-                                        <span className="author-name">{post.author}</span>
-                                    </div>
-                                    <div className="post-actions">
-                                        <button className="action-btn">👍 {post.likes}</button>
-                                        <button className="action-btn">💬 {post.comments}</button>
-                                        <button className="action-btn">📤 공유</button>
-                                    </div>
-                                </div>
+                        {loading ? (
+                            <div className="loading-state">
+                                <p>게시물을 불러오는 중...</p>
                             </div>
-                        ))}
+                        ) : error ? (
+                            <div className="error-state">
+                                <p>{error}</p>
+                                <button onClick={loadPosts}>다시 시도</button>
+                            </div>
+                        ) : posts.length === 0 ? (
+                            <div className="empty-state">
+                                <p>등록된 게시물이 없습니다.</p>
+                            </div>
+                        ) : (
+                            getSortedAndFilteredPosts().map((post) => (
+                                <div key={post.id} className="post-card">
+                                    <div className="post-header">
+                                        <span className={`category-tag ${post.category}`}>{post.category}</span>
+                                        <span className="post-time">{post.time}</span>
+                                    </div>
+                                    <h3 className="post-title">{post.title}</h3>
+                                    <p className="post-content">{post.content}</p>
+                                    <div className="post-location">📍 {post.location}</div>
+                                    <div className="post-footer">
+                                        <div className="post-author">
+                                            <span className="author-icon">👤</span>
+                                            <span className="author-name">{post.author}</span>
+                                        </div>
+                                        <div className="post-actions">
+                                            <button className="action-btn" onClick={() => handleLikeToggle(post.id)}>
+                                                👍 {post.likes || 0}
+                                            </button>
+                                            <button className="action-btn">💬 {post.comments || 0}</button>
+                                            <button className="action-btn">📤 공유</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>
+
+            {/* 인증 모달들 */}
+            <LoginModal
+                isOpen={showLoginModal}
+                onClose={() => setShowLoginModal(false)}
+                onSwitchToRegister={handleSwitchToRegister}
+                onLoginSuccess={handleLoginSuccess}
+            />
+
+            <RegisterModal
+                isOpen={showRegisterModal}
+                onClose={() => setShowRegisterModal(false)}
+                onSwitchToLogin={handleSwitchToLogin}
+                onRegisterSuccess={handleRegisterSuccess}
+            />
         </div>
     );
 }

@@ -20,15 +20,7 @@ function MainPage() {
         <div className="main-page">
             {/* Header with Navigation */}
             <header className="header">
-                <div className="header-left">
-                    <h1 className="title">Seoul AI 상황실</h1>
-                </div>
-                <nav className="nav-bar">
-                    <button className="nav-btn">Dashboard</button>
-                    <button className="nav-btn">Analytics</button>
-                    <button className="nav-btn">Reports</button>
-                    <button className="nav-btn">Settings</button>
-                </nav>
+                <h1 className="title">Seoul AI 상황실</h1>
             </header>
 
             {/* Main Dashboard Content */}

@@ -1,0 +1,125 @@
+import React, { useState } from 'react';
+import '../../styles/AuthModal.css';
+
+function LoginModal({ isOpen, onClose, onSwitchToRegister, onLoginSuccess }) {
+    const [formData, setFormData] = useState({
+        username: '',
+        password: '',
+    });
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleChange = (e) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value,
+        });
+        setError(''); // 입력시 에러 메시지 초기화
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setError('');
+
+        try {
+            // TODO: 백엔드 배포시 실제 API URL로 교체
+            const baseUrl = 'http://127.0.0.1:8000';
+
+            const response = await fetch(`${baseUrl}/api/auth/login/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+
+                // 토큰 저장
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('username', formData.username);
+
+                // 로그인 성공 콜백
+                onLoginSuccess({
+                    token: data.token,
+                    username: formData.username,
+                });
+
+                onClose();
+                setFormData({ username: '', password: '' });
+            } else {
+                const errorData = await response.json();
+                setError(errorData.message || '로그인에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            setError('네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="auth-modal-overlay">
+            <div className="auth-modal">
+                <div className="auth-modal-header">
+                    <h2>로그인</h2>
+                    <button className="close-btn" onClick={onClose}>
+                        ×
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="auth-form">
+                    <div className="form-group">
+                        <label htmlFor="username">사용자명</label>
+                        <input
+                            type="text"
+                            id="username"
+                            name="username"
+                            value={formData.username}
+                            onChange={handleChange}
+                            placeholder="사용자명을 입력하세요"
+                            required
+                            disabled={isLoading}
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label htmlFor="password">비밀번호</label>
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            value={formData.password}
+                            onChange={handleChange}
+                            placeholder="비밀번호를 입력하세요"
+                            required
+                            disabled={isLoading}
+                        />
+                    </div>
+
+                    {error && <div className="error-message">{error}</div>}
+
+                    <button type="submit" className="auth-submit-btn" disabled={isLoading}>
+                        {isLoading ? '로그인 중...' : '로그인'}
+                    </button>
+                </form>
+
+                <div className="auth-footer">
+                    <p>
+                        계정이 없으신가요?{' '}
+                        <button type="button" className="switch-auth-btn" onClick={onSwitchToRegister}>
+                            회원가입
+                        </button>
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default LoginModal;

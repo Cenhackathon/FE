@@ -9,9 +9,9 @@
 /* Header Styles */
 .header {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    padding: 1rem 2rem;
+    padding: 1.5rem 2rem;
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
@@ -19,31 +19,11 @@
 
 .title {
     color: white;
-    font-size: 2rem;
+    font-size: 2.2rem;
     font-weight: 700;
     margin: 0;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.nav-bar {
-    display: flex;
-    gap: 1rem;
-}
-
-.nav-btn {
-    padding: 0.5rem 1rem;
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 20px;
-    color: white;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.nav-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: translateY(-2px);
+    text-align: center;
 }
 
 /* Dashboard Layout */
@@ -481,49 +461,49 @@
 
 /* Traffic Card */
 .traffic-content {
-  display: flex;
-  gap: 20px;
-  padding: 35px;
-  background-color: white;
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    display: flex;
+    gap: 20px;
+    padding: 35px;
+    background-color: white;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .traffic-left,
 .traffic-right {
-  flex: 1;
-  background-color: #f3e8ff; /* 연보라색 */
-  padding: 16px;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
+    flex: 1;
+    background-color: #f3e8ff; /* 연보라색 */
+    padding: 16px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
 }
 
 .traffic-section-title h4 {
-  font-size: 1rem;
-  font-weight: bold;
-  color: #5b21b6;
-  margin-bottom: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #5b21b6;
+    margin-bottom: 8px;
 }
 
 .traffic-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
 .traffic-item {
-  font-size: 0.95rem;
-  line-height: 1.5;
-  color: #333;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #333;
 }
 
 .prediction-text {
-  font-size: 0.95rem;
-  line-height: 1.5;
-  color: #333;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #333;
 }
 
 /* Weather Card */
