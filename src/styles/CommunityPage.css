@@ -128,41 +128,127 @@
     margin: 0 auto;
 }
 
-/* Statistics Section */
-.community-stats-section {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
+/* Popular Posts Section */
+.popular-posts-section {
     margin-bottom: 2rem;
 }
 
-.stat-card {
+.popular-posts-section .section-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.popular-posts-section .section-header h2 {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.section-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    font-weight: 400;
+}
+
+.popular-posts-preview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.popular-post-card {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 15px;
     padding: 1.5rem;
-    text-align: center;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(10px);
     transition: all 0.3s ease;
+    position: relative;
 }
 
-.stat-card:hover {
+.popular-post-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
-.stat-number {
-    display: block;
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #667eea;
-    margin-bottom: 0.5rem;
+.popular-post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
 }
 
-.stat-label {
+.popular-rank {
+    background: linear-gradient(135deg, #ff6b6b, #ffa500);
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+}
+
+.popular-post-title {
+    color: #333;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.8rem 0;
+    line-height: 1.4;
+}
+
+.popular-post-content {
     color: #666;
     font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0 0 1rem 0;
+}
+
+.popular-post-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding-top: 0.8rem;
+}
+
+.popular-post-author {
+    color: #666;
+    font-size: 0.8rem;
     font-weight: 500;
+}
+
+.popular-post-stats {
+    display: flex;
+    gap: 1rem;
+}
+
+.popular-likes,
+.popular-comments {
+    color: #666;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.no-popular-posts {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem 2rem;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.no-popular-posts p {
+    color: #666;
+    margin: 0.5rem 0;
+}
+
+.no-popular-posts p:first-child {
+    font-weight: 600;
+    color: #333;
 }
 
 /* Post Form Modal */
@@ -349,7 +435,6 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
     flex-wrap: wrap;
     gap: 1rem;
 }

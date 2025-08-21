@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Tmap from '../components/traffic/Tmap';
+import { communityService } from '../services/communityService';
 import '../styles/MainPage.css';
 
 function MainPage() {
     const navigate = useNavigate();
+    const [popularPosts, setPopularPosts] = useState([]);
 
     const handleLivemapClick = () => {
         navigate('/livemap');
@@ -22,6 +24,53 @@ function MainPage() {
         navigate('/weather');
     };
 
+    // 컴포넌트 마운트시 인기게시물 로드
+    useEffect(() => {
+        loadPopularPosts();
+    }, []);
+
+    // 인기 게시물 로드 함수
+    const loadPopularPosts = async () => {
+        try {
+            const data = await communityService.getPopularPosts();
+            // 상위 2개만 가져오기
+            const transformedPosts = data.slice(0, 2).map((post) => ({
+                id: post.post_id,
+                title: post.title,
+                content: post.content,
+                author: post.author,
+                time: formatTime(post.created_at),
+                likes: post.likes,
+                comments: post.comments?.length || 0,
+                category: getCategoryUIValue(post.category),
+            }));
+            setPopularPosts(transformedPosts);
+        } catch (error) {
+            console.error('인기 게시물 로드 실패:', error);
+            // 실패시 빈 배열로 설정
+            setPopularPosts([]);
+        }
+    };
+
+    // 시간 포맷팅 함수
+    const formatTime = (dateString) => {
+        const now = new Date();
+        const postTime = new Date(dateString);
+        const diffMs = now - postTime;
+        const diffMins = Math.floor(diffMs / 60000);
+
+        if (diffMins < 1) return '방금 전';
+        if (diffMins < 60) return `${diffMins}분 전`;
+        if (diffMins < 1440) return `${Math.floor(diffMins / 60)}시간 전`;
+        return `${Math.floor(diffMins / 1440)}일 전`;
+    };
+
+    // 카테고리 API값을 UI값으로 변환
+    const getCategoryUIValue = (apiCategory) => {
+        const map = { general: '교통', emergency: '민원', notice: '지역정보' };
+        return map[apiCategory] || '교통';
+    };
+
     return (
         <div className="main-page">
             {/* Header with Navigation */}
@@ -35,10 +84,7 @@ function MainPage() {
                 <div className="top-row">
                     {/* Map Section - Large */}
                     <section className="map-section">
-                        <div className="section-header"
-                            onClick={handleLivemapClick}
-                            style={{ cursor: 'pointer' }}
-                        >
+                        <div className="section-header" onClick={handleLivemapClick} style={{ cursor: 'pointer' }}>
                             <h2>실시간 지도</h2>
                             <div className="section-controls">
                                 <button className="control-btn">🔄</button>
@@ -95,23 +141,32 @@ function MainPage() {
                                 <div className="community-preview">
                                     <div className="community-stats">
                                         <div className="stat">
-                                            <span className="stat-number">24</span>
-                                            <span className="stat-label">활성 사용자</span>
+                                            <span className="stat-number">{popularPosts.length}</span>
+                                            <span className="stat-label">인기 게시물</span>
                                         </div>
                                         <div className="stat">
-                                            <span className="stat-number">156</span>
-                                            <span className="stat-label">오늘 게시물</span>
+                                            <span className="stat-number">
+                                                {popularPosts.reduce((sum, post) => sum + post.likes, 0)}
+                                            </span>
+                                            <span className="stat-label">총 좋아요</span>
                                         </div>
                                     </div>
                                     <div className="recent-posts">
-                                        <div className="post-item">
-                                            <span className="post-title">동대문구 교통 상황 문의</span>
-                                            <span className="post-time">2분 전</span>
-                                        </div>
-                                        <div className="post-item">
-                                            <span className="post-title">날씨 예보 관련 질문</span>
-                                            <span className="post-time">15분 전</span>
-                                        </div>
+                                        {popularPosts.length > 0 ? (
+                                            popularPosts.map((post, index) => (
+                                                <div key={post.id} className="post-item">
+                                                    <span className="post-title">
+                                                        #{index + 1} {post.title}
+                                                    </span>
+                                                    <span className="post-time">{post.time}</span>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="post-item">
+                                                <span className="post-title">아직 인기 게시물이 없습니다</span>
+                                                <span className="post-time">-</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
