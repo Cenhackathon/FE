@@ -16,6 +16,8 @@ function CommunityPage() {
         category: '교통',
         location: '',
         locationType: 'current', // 'current' or 'search'
+        image: null, // 이미지 파일
+        imagePreview: null, // 이미지 미리보기 URL
     });
 
     const [showPostForm, setShowPostForm] = useState(false);
@@ -73,7 +75,7 @@ function CommunityPage() {
                     location: post.location,
                     latitude: post.latitude,
                     longitude: post.longitude,
-                    images: post.image_url ? [post.image_url] : [],
+                    image_url: post.image_url, // S3 이미지 URL
                 }));
                 setPosts(transformedPosts);
             } else {
@@ -191,6 +193,44 @@ function CommunityPage() {
         }
     };
 
+    // 이미지 업로드 핸들러
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // 파일 크기 제한 (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('이미지 크기는 5MB 이하만 업로드 가능합니다.');
+                return;
+            }
+
+            // 이미지 파일 형식 확인
+            if (!file.type.startsWith('image/')) {
+                alert('이미지 파일만 업로드 가능합니다.');
+                return;
+            }
+
+            // 미리보기 URL 생성
+            const previewUrl = URL.createObjectURL(file);
+            setNewPost({
+                ...newPost,
+                image: file,
+                imagePreview: previewUrl,
+            });
+        }
+    };
+
+    // 이미지 삭제 핸들러
+    const handleImageRemove = () => {
+        if (newPost.imagePreview) {
+            URL.revokeObjectURL(newPost.imagePreview);
+        }
+        setNewPost({
+            ...newPost,
+            image: null,
+            imagePreview: null,
+        });
+    };
+
     const handleSubmitPost = async (e) => {
         e.preventDefault();
         if (!newPost.title || !newPost.content || !newPost.location) {
@@ -215,35 +255,46 @@ function CommunityPage() {
                 지역정보: 'notice',
             };
 
-            const postData = {
-                title: newPost.title,
-                content: newPost.content,
-                category: categoryMap[newPost.category] || 'general',
-                latitude: 37.5665, // TODO: 실제 위치 정보로 교체
-                longitude: 126.978, // TODO: 실제 위치 정보로 교체
-                location: newPost.location,
-            };
+            // FormData 사용하여 이미지와 텍스트 데이터 함께 전송
+            const formData = new FormData();
+            formData.append('title', newPost.title);
+            formData.append('content', newPost.content);
+            formData.append('category', categoryMap[newPost.category] || 'general');
+            formData.append('latitude', '37.5665'); // TODO: 실제 위치 정보로 교체
+            formData.append('longitude', '126.978'); // TODO: 실제 위치 정보로 교체
+            formData.append('location', newPost.location);
+
+            // 이미지가 있으면 추가
+            if (newPost.image) {
+                formData.append('image', newPost.image);
+            }
 
             const response = await fetch(`${baseUrl}/community/upload/`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    // FormData 사용시 Content-Type 헤더를 설정하지 않음 (브라우저가 자동 설정)
                     Authorization: `Token ${currentUser?.token}`,
                 },
-                body: JSON.stringify(postData),
+                body: formData,
             });
 
             if (response.ok) {
                 // 게시물 작성 성공 후 목록 새로고침
                 await loadPosts();
+
+                // 이미지 미리보기 URL 정리
+                if (newPost.imagePreview) {
+                    URL.revokeObjectURL(newPost.imagePreview);
+                }
+
                 setNewPost({
                     title: '',
                     content: '',
                     category: '교통',
                     location: '',
                     locationType: 'current',
-                    images: [],
-                    imagePreviewUrls: [],
+                    image: null,
+                    imagePreview: null,
                 });
                 setShowPostForm(false);
                 alert('게시물이 성공적으로 작성되었습니다!');
@@ -418,6 +469,44 @@ function CommunityPage() {
                                         )}
                                     </div>
                                 </div>
+
+                                {/* 이미지 업로드 필드 */}
+                                <div className="form-group">
+                                    <label>이미지 첨부 (선택)</label>
+                                    <div className="image-upload-container">
+                                        {!newPost.imagePreview ? (
+                                            <div className="image-upload-area">
+                                                <input
+                                                    type="file"
+                                                    id="imageUpload"
+                                                    accept="image/*"
+                                                    onChange={handleImageChange}
+                                                    style={{ display: 'none' }}
+                                                />
+                                                <label htmlFor="imageUpload" className="image-upload-button">
+                                                    📷 이미지 선택하기
+                                                </label>
+                                                <p className="image-upload-hint">JPG, PNG, GIF 파일 (최대 5MB)</p>
+                                            </div>
+                                        ) : (
+                                            <div className="image-preview-container">
+                                                <img
+                                                    src={newPost.imagePreview}
+                                                    alt="업로드 미리보기"
+                                                    className="image-preview"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className="image-remove-button"
+                                                    onClick={handleImageRemove}
+                                                >
+                                                    ✕ 이미지 삭제
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
                                 <div className="form-actions">
                                     <button type="button" onClick={() => setShowPostForm(false)}>
                                         취소
@@ -500,6 +589,21 @@ function CommunityPage() {
                                     </div>
                                     <h3 className="post-title">{post.title}</h3>
                                     <p className="post-content">{post.content}</p>
+
+                                    {/* 이미지가 있으면 표시 */}
+                                    {post.image_url && (
+                                        <div className="post-image-container">
+                                            <img
+                                                src={post.image_url}
+                                                alt="게시물 이미지"
+                                                className="post-image"
+                                                onError={(e) => {
+                                                    e.target.style.display = 'none';
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+
                                     <div className="post-location">📍 {post.location}</div>
                                     <div className="post-footer">
                                         <div className="post-author">

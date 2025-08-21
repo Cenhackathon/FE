@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import Tmap from '../components/traffic/Tmap';
 import '../styles/MainPage.css';
 
 function MainPage() {
@@ -37,14 +38,7 @@ function MainPage() {
                             </div>
                         </div>
                         <div className="map-container">
-                            <div className="map-placeholder">
-                                <p>서울시 실시간 상황 지도</p>
-                                <div className="map-indicators">
-                                    <span className="indicator green">정상</span>
-                                    <span className="indicator yellow">주의</span>
-                                    <span className="indicator red">경고</span>
-                                </div>
-                            </div>
+                            <Tmap />
                         </div>
                     </section>
 

@@ -51,7 +51,38 @@ function LoginModal({ isOpen, onClose, onSwitchToRegister, onLoginSuccess }) {
                 setFormData({ username: '', password: '' });
             } else {
                 const errorData = await response.json();
-                setError(errorData.message || '로그인에 실패했습니다.');
+
+                // Django REST framework 오류 메시지 파싱
+                let errorMessage = '';
+
+                if (errorData.username) {
+                    errorMessage += `사용자명: ${
+                        Array.isArray(errorData.username) ? errorData.username.join(', ') : errorData.username
+                    }\n`;
+                }
+                if (errorData.password) {
+                    errorMessage += `비밀번호: ${
+                        Array.isArray(errorData.password) ? errorData.password.join(', ') : errorData.password
+                    }\n`;
+                }
+                if (errorData.non_field_errors) {
+                    errorMessage += `${
+                        Array.isArray(errorData.non_field_errors)
+                            ? errorData.non_field_errors.join(', ')
+                            : errorData.non_field_errors
+                    }\n`;
+                }
+
+                // 일반적인 로그인 실패 메시지
+                if (!errorMessage && errorData.detail) {
+                    errorMessage = errorData.detail;
+                } else if (!errorMessage && errorData.message) {
+                    errorMessage = errorData.message;
+                } else if (!errorMessage) {
+                    errorMessage = '아이디 또는 비밀번호가 올바르지 않습니다.';
+                }
+
+                setError(errorMessage.trim());
             }
         } catch (error) {
             console.error('Login error:', error);
