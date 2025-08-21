@@ -5,6 +5,10 @@ import '../styles/MainPage.css';
 function MainPage() {
     const navigate = useNavigate();
 
+    const handleLivemapClick = () => {
+        navigate('/livemap');
+    };
+
     const handleCommunityClick = () => {
         navigate('/community');
     };
@@ -16,6 +20,7 @@ function MainPage() {
     const handleWeatherClick = () => {
         navigate('/weather');
     };
+
     return (
         <div className="main-page">
             {/* Header with Navigation */}
@@ -29,7 +34,10 @@ function MainPage() {
                 <div className="top-row">
                     {/* Map Section - Large */}
                     <section className="map-section">
-                        <div className="section-header">
+                        <div className="section-header"
+                            onClick={handleLivemapClick}
+                            style={{ cursor: 'pointer' }}
+                        >
                             <h2>실시간 지도</h2>
                             <div className="section-controls">
                                 <button className="control-btn">🔄</button>
