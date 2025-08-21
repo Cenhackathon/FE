@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoginModal from '../components/auth/LoginModal';
 import RegisterModal from '../components/auth/RegisterModal';
+import { communityService } from '../services/communityService';
 import '../styles/CommunityPage.css';
 
 function CommunityPage() {
     const navigate = useNavigate();
     const [posts, setPosts] = useState([]);
+    const [popularPosts, setPopularPosts] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -42,6 +44,8 @@ function CommunityPage() {
 
         // 게시물 목록 로드
         loadPosts();
+        // 인기 게시물 로드
+        loadPopularPosts();
     }, []);
 
     // 정렬이나 카테고리가 변경될 때 게시물 다시 로드
@@ -86,6 +90,31 @@ function CommunityPage() {
             setError('게시물을 불러오는데 실패했습니다.');
         } finally {
             setLoading(false);
+        }
+    };
+
+    // 인기 게시물 로드 함수
+    const loadPopularPosts = async () => {
+        try {
+            const data = await communityService.getPopularPosts();
+            // API 응답 데이터를 UI 형태로 변환하고 상위 2개만 가져오기
+            const transformedPosts = data.slice(0, 2).map((post) => ({
+                id: post.post_id,
+                title: post.title,
+                content: post.content,
+                author: post.author,
+                time: formatTime(post.created_at),
+                likes: post.likes,
+                comments: post.comments?.length || 0,
+                category: getCategoryUIValue(post.category),
+                location: post.location,
+                image_url: post.image_url,
+            }));
+            setPopularPosts(transformedPosts);
+        } catch (error) {
+            console.error('인기 게시물 로드 실패:', error);
+            // 실패시 빈 배열로 설정
+            setPopularPosts([]);
         }
     };
 
@@ -372,19 +401,41 @@ function CommunityPage() {
             </header>
 
             <div className="community-content">
-                {/* Statistics Section */}
-                <div className="community-stats-section">
-                    <div className="stat-card">
-                        <span className="stat-number">152</span>
-                        <span className="stat-label">전체 게시물</span>
+                {/* Popular Posts Preview Section */}
+                <div className="popular-posts-section">
+                    <div className="section-header">
+                        <h2>🔥 인기 게시물</h2>
+                        <span className="section-subtitle">좋아요 10개 이상 게시물</span>
                     </div>
-                    <div className="stat-card">
-                        <span className="stat-number">47</span>
-                        <span className="stat-label">활성 사용자</span>
-                    </div>
-                    <div className="stat-card">
-                        <span className="stat-number">23</span>
-                        <span className="stat-label">오늘 작성</span>
+                    <div className="popular-posts-preview">
+                        {popularPosts.length > 0 ? (
+                            popularPosts.map((post, index) => (
+                                <div key={post.id} className="popular-post-card">
+                                    <div className="popular-post-header">
+                                        <span className={`category-tag ${post.category}`}>{post.category}</span>
+                                        <span className="popular-rank">#{index + 1}</span>
+                                    </div>
+                                    <h3 className="popular-post-title">{post.title}</h3>
+                                    <p className="popular-post-content">
+                                        {post.content.length > 50
+                                            ? `${post.content.substring(0, 50)}...`
+                                            : post.content}
+                                    </p>
+                                    <div className="popular-post-footer">
+                                        <span className="popular-post-author">👤 {post.author}</span>
+                                        <div className="popular-post-stats">
+                                            <span className="popular-likes">👍 {post.likes}</span>
+                                            <span className="popular-comments">💬 {post.comments}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="no-popular-posts">
+                                <p>아직 인기 게시물이 없습니다.</p>
+                                <p>좋아요 10개 이상인 게시물이 여기에 표시됩니다.</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
