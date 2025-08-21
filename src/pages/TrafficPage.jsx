@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../styles/TrafficPageStyles.css';
 import Tmap from '../components/traffic/Tmap';
 
 const TrafficPage = () => {
+    const navigate = useNavigate();
     const [posts, setPosts] = useState([]); // 교통혼잡도 top3
     const [prediction, setPrediction] = useState([]); // 예측 데이터
     const [alerts, setAlerts] = useState([]); // 실시간 알림
@@ -23,12 +25,25 @@ const TrafficPage = () => {
         }
     };
 
+    const handleBack = () => {
+        navigate('/');
+    };
+
     useEffect(() => {
         getPosts();
     }, []);
 
     return (
         <div className="traffic-page-container">
+            <header className="traffic-header">
+                <div className="header-left">
+                    <button className="back-btn" onClick={handleBack}>
+                        ← 돌아가기
+                    </button>
+                    <h1 className="page-title">Traffic</h1>
+                </div>
+            </header>
+
             <div className="map-placeholder">
                 <Tmap />
             </div>
@@ -58,28 +73,19 @@ const TrafficPage = () => {
                             {post.location} {/*>>>>여기 백엔드 주소에 따라 바뀌어야함*/}
                         </li>
                     ))}
-                    {/* <li>
-            1. 이문동(주소)
-          </li>
-          <li>
-            2. 회기동(주소)
-          </li>
-          <li>
-            3. 휘경동(주소)
-          </li> */}
                 </ul>
 
                 <h3>예측 데이터</h3>
                 <ul className="legend-list">
                     <p className="prediction-text">
-                        도로 혼잡 예상 구간: 청량리역, 장안동 사거리(주소) {prediction.join(', ')}
+                        도로 혼잡 예상 구간: {prediction.join(', ')}
                     </p>
                 </ul>
 
                 <h3>실시간 알림</h3>
                 <ul className="legend-list">
                     {alerts.map((alert, index) => (
-                        <div key={index} className={alert.type === 'warning' ? 'alert-box-red' : 'alert-box-yellow'}>
+                        <div key={index} className={alert.type === 'Y' ? 'alert-box-red' : 'alert-box-yellow'}>
                             {alert.type === 'warning' ? '🚨 ' : '🚧 '}
                             {alert.message}
                         </div>

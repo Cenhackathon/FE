@@ -75,7 +75,7 @@ function MainPage() {
         <div className="main-page">
             {/* Header with Navigation */}
             <header className="header">
-                <h1 className="title">Seoul AI 상황실</h1>
+                <h1 className="title">동대문을 열어라.</h1>
             </header>
 
             {/* Main Dashboard Content */}
