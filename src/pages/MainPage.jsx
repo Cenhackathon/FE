@@ -43,6 +43,9 @@ function MainPage() {
                 likes: post.likes,
                 comments: post.comments?.length || 0,
                 category: getCategoryUIValue(post.category),
+                latitude: post.latitude,
+                longitude: post.longitude,
+                location: post.location,
             }));
             setPopularPosts(transformedPosts);
         } catch (error) {
@@ -92,7 +95,7 @@ function MainPage() {
                             </div>
                         </div>
                         <div className="map-container">
-                            <Tmap />
+                            <Tmap popularPosts={popularPosts} />
                         </div>
                     </section>
 

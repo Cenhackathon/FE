@@ -139,21 +139,9 @@ function CommunityPage() {
         }
 
         try {
-            const baseUrl = 'http://127.0.0.1:8000';
-            const response = await fetch(`${baseUrl}/community/${postId}/likes`, {
-                method: 'POST',
-                headers: {
-                    Authorization: `Token ${currentUser?.token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (response.ok) {
-                // 좋아요 처리 후 게시물 목록 새로고침
-                await loadPosts();
-            } else {
-                throw new Error('좋아요 처리 실패');
-            }
+            await communityService.toggleLike(postId, currentUser?.token);
+            // 좋아요 처리 후 게시물 목록 새로고침
+            await loadPosts();
         } catch (error) {
             console.error('좋아요 처리 실패:', error);
             alert('좋아요 처리에 실패했습니다.');
@@ -174,6 +162,11 @@ function CommunityPage() {
     };
     const handleBack = () => {
         navigate('/');
+    };
+
+    // 게시물 상세페이지로 이동
+    const handlePostClick = (postId) => {
+        navigate(`/community/${postId}`);
     };
 
     // 인증 관련 핸들러
@@ -633,7 +626,11 @@ function CommunityPage() {
                             </div>
                         ) : (
                             getSortedAndFilteredPosts().map((post) => (
-                                <div key={post.id} className="post-card">
+                                <div
+                                    key={post.id}
+                                    className="post-card clickable"
+                                    onClick={() => handlePostClick(post.id)}
+                                >
                                     <div className="post-header">
                                         <span className={`category-tag ${post.category}`}>{post.category}</span>
                                         <span className="post-time">{post.time}</span>
@@ -662,11 +659,21 @@ function CommunityPage() {
                                             <span className="author-name">{post.author}</span>
                                         </div>
                                         <div className="post-actions">
-                                            <button className="action-btn" onClick={() => handleLikeToggle(post.id)}>
+                                            <button
+                                                className="action-btn"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleLikeToggle(post.id);
+                                                }}
+                                            >
                                                 👍 {post.likes || 0}
                                             </button>
-                                            <button className="action-btn">💬 {post.comments || 0}</button>
-                                            <button className="action-btn">📤 공유</button>
+                                            <button className="action-btn" onClick={(e) => e.stopPropagation()}>
+                                                💬 {post.comments || 0}
+                                            </button>
+                                            <button className="action-btn" onClick={(e) => e.stopPropagation()}>
+                                                📤 공유
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
