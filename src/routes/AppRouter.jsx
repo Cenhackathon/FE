@@ -5,11 +5,13 @@ import TrafficPage from '../pages/TrafficPage';
 import WeatherPage from '../pages/WeatherPage';
 import CommunityPage from '../pages/CommunityPage';
 import ChatbotPage from '../pages/ChatbotPage';
+import Livemap from '../pages/Livemap';
 
 function AppRouter() {
     return (
         <Routes>
             <Route path="/" element={<MainPage />} />
+            <Route path="/livemap" element={<Livemap />} />
             <Route path="/traffic" element={<TrafficPage />} />
             <Route path="/weather" element={<WeatherPage />} />
             <Route path="/community" element={<CommunityPage />} />
