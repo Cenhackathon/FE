@@ -74,7 +74,7 @@ const TrafficPage = () => {
                 topPosts.push({
                     name: `${roadName} (${areaName}) - ${congestionLevel}`
                 });
-                usedRoads.add(roadName);
+                usedRoads.add(roadName); 
             }
 
             setPosts(topPosts);
