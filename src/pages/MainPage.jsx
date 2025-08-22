@@ -164,10 +164,6 @@ function MainPage() {
                     <section className="map-section">
                         <div className="section-header" onClick={handleLivemapClick} style={{ cursor: 'pointer' }}>
                             <h2>실시간 지도</h2>
-                            <div className="section-controls">
-                                <button className="control-btn">🔄</button>
-                                <button className="control-btn">⚙️</button>
-                            </div>
                         </div>
                         <div className="map-container">
                             <Tmap />
