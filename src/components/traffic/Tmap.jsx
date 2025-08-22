@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-const Tmap = () => {
+const Tmap = ({ alerts }) => {
     const mapRef = useRef(null);
     const initialized = useRef(false);
     const polylineRef = useRef([]);
+    const markerRef = useRef([]);
     const [trafficVisible, setTrafficVisible] = useState(true);
     const [autoUpdate, setAutoUpdate] = useState(true);
 
@@ -61,6 +62,28 @@ const Tmap = () => {
         } catch (e) {
             console.error('교통 API 오류:', e);
         }
+    };
+
+    // 알림에 따라 마크 추가
+    const addAlertMarkers = () => {
+        if(!mapRef.current || !window.Tmapv2) return;
+
+        // 기존 마커 제거
+        markerRef.current.forEach(marker => marker.setMap(null));
+        markerRef.current = [];
+
+        // 알림에 따라 마커 추가
+        alerts.forEach(alert => {
+            if(alert.coordinates && alert.coordinates.length === 2){
+                const [lon, lat] = alert.coordinates;
+                const marker = new window.Tmapv2.Marker({
+                    position: new window.Tmapv2.LatLng(lat, lon),
+                    map: mapRef.current,
+                    title: alert.name,
+                });
+                markerRef.current.push(marker);
+            }
+        });
     };
 
     // 지도 초기화
