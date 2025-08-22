@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from "axios"
 import '../styles/Livemap.css';
 import Tmap from '../components/traffic/Tmap';
 
 const Livemap = () => {
-  const [posts, setPosts] = useState([]); // 교통혼잡도 top3
-  const [prediction, setPrediction] = useState([]); // 예측 데이터
-  const [alerts, setAlerts] = useState([]); // 실시간 알림
+    const navigate = useNavigate();
+    const [posts, setPosts] = useState([]); // 교통혼잡도 top3
+    const [prediction, setPrediction] = useState([]); // 예측 데이터
+    const [alerts, setAlerts] = useState([]); // 실시간 알림
+
+    const handleBack = () => {
+        navigate('/');
+    };
 
   const getPosts = async() => { // 백엔드 보고 맞춰야함
     try{
@@ -29,7 +35,15 @@ const Livemap = () => {
   }, []);
   
   return (
-    <div className="traffic-page-container">
+    <div className="livemap-page-container">
+        <header className="livemap-header">
+            <div className="header-left">
+                <button className="back-btn" onClick={handleBack}>
+                    ← 돌아가기
+                </button>
+                <h1 className="page-title">Traffic</h1>
+            </div>
+        </header>
       <div className="map-placeholder">
         <Tmap />
       </div>
