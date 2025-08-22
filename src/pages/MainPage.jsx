@@ -24,9 +24,87 @@ function MainPage() {
         navigate('/weather');
     };
 
+    const [posts, setPosts] = useState([]); // 교통혼잡도 top3
+
+    // 좌표를 행정동으로 변환, 실패 시 기본값 사용
+    const getAddressName = async (lon, lat) => {
+        const TMAP_APP_KEY = process.env.REACT_APP_TMAP_API_KEY;
+        const url = `https://apis.openapi.sk.com/tmap/geo/reversegeocoding?version=1&lat=${lat}&lon=${lon}&coordType=WGS84GEO`;
+
+        try {
+            const res = await fetch(url, {
+                method: 'GET',
+                headers: { 'appKey': TMAP_APP_KEY }
+            });
+            const data = await res.json();
+            return data.addressInfo?.legalDong || data.addressInfo?.roadName || '알 수 없는 지역';
+        } catch (err) {
+            console.error("주소 변환 에러:", err);
+            return '알 수 없는 지역';
+        }
+    };
+
+    const getPosts = async () => {
+        try {
+            const TMAP_APP_KEY = process.env.REACT_APP_TMAP_API_KEY;
+            const tmapUrl = `https://apis.openapi.sk.com/tmap/traffic?version=1&reqCoordType=WGS84GEO&resCoordType=WGS84GEO&trafficType=AUTO&centerLon=127.0595&centerLat=37.5979&zoomLevel=15`;
+            const tmapResponse = await fetch(tmapUrl, {
+                method: 'GET',
+                headers: { 'appKey': TMAP_APP_KEY }
+            });
+
+            if (!tmapResponse.ok) throw new Error(`HTTP error! status: ${tmapResponse.status}`);
+
+            const tmapData = await tmapResponse.json();
+            const features = tmapData.features || [];
+
+            const usedRoads = new Set();
+            const topPosts = [];
+
+            // 반복하며 중복 도로 제거, top3 확보
+            for (const feature of features
+                .filter(f => f.geometry.type === 'LineString' && f.properties.congestion)
+                .sort((a, b) => b.properties.congestion - a.properties.congestion)) {
+
+                if (topPosts.length >= 3) break;
+
+                const props = feature.properties;
+                const coords = feature.geometry.coordinates;
+                const [lon, lat] = coords[0];
+
+                let roadName = '도로명 정보 없음';
+                if (props.name) roadName = props.name.split('/')[0];
+                else if (props.routeNo) roadName = `도로 번호 ${props.routeNo}`;
+                else if (props.linkId) roadName = `도로 ID ${props.linkId}`;
+
+                if (usedRoads.has(roadName)) continue; // 이미 나온 도로는 건너뛰기
+
+                const areaName = await getAddressName(lon, lat);
+
+                const congestionLevel = {
+                    1: '원활',
+                    2: '서행',
+                    3: '지체',
+                    4: '정체'
+                }[props.congestion] || '정보 없음';
+
+                topPosts.push({
+                    name: `${roadName} (${areaName}) - ${congestionLevel}`
+                });
+                usedRoads.add(roadName);
+            }
+
+            setPosts(topPosts);
+        } catch (error) {
+            console.log('에러: ', error);
+        }
+    };
+    
+
     // 컴포넌트 마운트시 인기게시물 로드
     useEffect(() => {
         loadPopularPosts();
+        getPosts();
     }, []);
 
     // 인기 게시물 로드 함수
@@ -192,11 +270,13 @@ function MainPage() {
                                     <h4>교통 혼잡도 TOP3</h4>
                                 </div>
 
-                                <ol className="traffic-list">
-                                    <li className="traffic-item">1. 이문동 </li>
-                                    <li className="traffic-item">2. 회기동 </li>
-                                    <li className="traffic-item">3. 휘경동 </li>
-                                </ol>
+                                <ul className="traffic-list">
+                                    {posts.map((post, index) => (
+                                        <li key={index}>
+                                        {`${index + 1}. ${post.name}`}
+                                        </li>
+                                    ))}
+                                </ul>
                             </div>
 
                             <div className="traffic-right">
