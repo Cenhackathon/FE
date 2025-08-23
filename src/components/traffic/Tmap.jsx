@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 
 const Tmap = ({ alerts }) => {
     const mapRef = useRef(null);
@@ -9,7 +9,7 @@ const Tmap = ({ alerts }) => {
     const [autoUpdate, setAutoUpdate] = useState(true);
 
     // Polyline 생성/갱신 함수
-    const fetchTraffic = async () => {
+    const fetchTraffic = useCallback(async () => {
         if (!mapRef.current) return;
 
         try {
@@ -62,10 +62,10 @@ const Tmap = ({ alerts }) => {
         } catch (e) {
             console.error('교통 API 오류:', e);
         }
-    };
+    }, [mapRef, trafficVisible]);
 
     // 알림에 따라 마크 추가
-    const addAlertMarkers = () => {
+    const addAlertMarkers = useCallback(() => {
         if(!mapRef.current || !window.Tmapv2) return;
 
         // 기존 마커 제거
@@ -84,7 +84,7 @@ const Tmap = ({ alerts }) => {
                 markerRef.current.push(marker);
             }
         });
-    };
+    }, [mapRef, alerts]);
 
     // 지도 초기화
     useEffect(() => {
@@ -111,12 +111,12 @@ const Tmap = ({ alerts }) => {
         if (autoUpdate) interval = setInterval(fetchTraffic, 180000);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [autoUpdate, fetchTraffic]);
 
     // trafficVisible 변경 시 새로 Polyline 그리기
     useEffect(() => {
         fetchTraffic();
-    }, [trafficVisible]);
+    }, [fetchTraffic]);
 
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative' }}>
