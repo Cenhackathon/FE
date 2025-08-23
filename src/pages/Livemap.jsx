@@ -132,17 +132,18 @@ const Livemap = () => {
             try {
                 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://127.0.0.1:8000';
                 const response = await axios.get(`${API_BASE_URL}/`, {
-                    timeout: 5000 // 5초 타임아웃
+                    timeout: 5000, // 5초 타임아웃
                 });
                 const data = response.data;
-                const newAlerts = data.posts
-                    ?.filter((post) => post.isAccidentNode === 'Y')
-                    .map((post) => ({
-                        type: 'Y',
-                        message: post.description,
-                        traffictype: post.accidentUppercode,
-                        coordinates: post.coordinates,
-                    })) || [];
+                const newAlerts =
+                    data.posts
+                        ?.filter((post) => post.isAccidentNode === 'Y')
+                        .map((post) => ({
+                            type: 'Y',
+                            message: post.description,
+                            traffictype: post.accidentUppercode,
+                            coordinates: post.coordinates,
+                        })) || [];
                 setAlerts(newAlerts);
                 setPrediction(data.prediction || []);
             } catch (backendError) {
@@ -157,7 +158,7 @@ const Livemap = () => {
             setPosts([
                 { name: '1. 데이터를 불러올 수 없습니다' },
                 { name: '2. API 키를 확인해주세요' },
-                { name: '3. 네트워크 연결을 확인해주세요' }
+                { name: '3. 네트워크 연결을 확인해주세요' },
             ]);
             setAlerts([]);
             setPrediction(['데이터 로드 실패']);

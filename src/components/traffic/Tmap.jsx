@@ -1,7 +1,13 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { loadTmapScript } from '../../utils/tmapLoader';
 
-const Tmap = ({ popularPosts = [], currentLocation = null, alerts = [], onRefreshLocation }) => {
+const Tmap = ({
+    popularPosts = [],
+    currentLocation = { latitude: null, longitude: null, loading: true, error: null },
+    alerts = [],
+    onRefreshLocation,
+}) => {
     const navigate = useNavigate();
     const mapRef = useRef(null);
     const initialized = useRef(false);
@@ -36,13 +42,13 @@ const Tmap = ({ popularPosts = [], currentLocation = null, alerts = [], onRefres
             url.searchParams.append('appKey', TMAP_APP_KEY);
 
             const res = await fetch(url.toString(), {
-                timeout: 10000 // 10초 타임아웃
+                timeout: 10000, // 10초 타임아웃
             });
-            
+
             if (!res.ok) {
                 throw new Error(`T맵 API 오류: ${res.status} ${res.statusText}`);
             }
-            
+
             const data = await res.json();
 
             const features = data.features || [];
@@ -222,6 +228,19 @@ const Tmap = ({ popularPosts = [], currentLocation = null, alerts = [], onRefres
             console.log('기존 마커 제거됨');
         }
 
+        // currentLocation이 null이거나 undefined인 경우 처리
+        if (!currentLocation) {
+            console.log('currentLocation이 null/undefined, 기본 위치 사용');
+            const markerPosition = new window.Tmapv2.LatLng(37.5979, 127.0595);
+            const marker = new window.Tmapv2.Marker({
+                position: markerPosition,
+                map: mapRef.current,
+                title: '기본 위치 (한국외국어대학교)',
+            });
+            currentLocationMarkerRef.current = marker;
+            return;
+        }
+
         // 위치 정보가 로딩 중이거나 없으면 기본 위치 마커 표시
         let markerPosition, markerTitle, markerIcon;
 
@@ -286,14 +305,28 @@ const Tmap = ({ popularPosts = [], currentLocation = null, alerts = [], onRefres
 
     // 지도 초기화
     useEffect(() => {
-        // T맵 라이브러리가 로드될 때까지 대기
-        const initializeMap = () => {
-            if (!window.Tmapv2 || initialized.current) {
-                return;
-            }
+        const initializeMap = async () => {
+            if (initialized.current) return;
 
             try {
-                console.log('지도 초기화 시작');
+                console.log('T맵 스크립트 로드 시작...');
+
+                // .env에서 API 키를 가져와서 동적으로 T맵 스크립트 로드
+                const Tmapv2 = await loadTmapScript();
+
+                console.log('T맵 스크립트 로드 완료, 지도 초기화 시작');
+
+                // 추가 안전 체크
+                if (!window.Tmapv2 || !window.Tmapv2.Map || !window.Tmapv2.LatLng) {
+                    throw new Error('T맵 라이브러리가 완전히 로드되지 않음');
+                }
+
+                // React StrictMode 등으로 인해 재마운트될 때 이전 지도 DOM이 남아 중복 표시되는 것을 방지
+                const container = document.getElementById('mapDiv');
+                if (container) {
+                    // 남아있는 기존 자식 노드 제거
+                    while (container.firstChild) container.removeChild(container.firstChild);
+                }
 
                 // 기본 중심 위치 (한국외국어대학교)
                 const initialCenter = new window.Tmapv2.LatLng(37.5979, 127.0595);
@@ -304,53 +337,72 @@ const Tmap = ({ popularPosts = [], currentLocation = null, alerts = [], onRefres
                     height: '100%',
                     zoom: 14,
                 });
+
                 mapRef.current = map;
                 initialized.current = true;
 
                 console.log('지도 생성 완료:', map);
 
-                // 약간의 지연 후 마커들 추가 (지도 렌더링 완료 대기)
+                // 지도 로드 완료 후 마커들 추가
                 setTimeout(() => {
-                    fetchTraffic();
-                    updatePopularPostMarkers();
-                    updateCurrentLocationMarker();
-                    addAlertMarkers();
-                }, 100);
-
+                    if (mapRef.current) {
+                        fetchTraffic();
+                        updatePopularPostMarkers();
+                        updateCurrentLocationMarker();
+                        addAlertMarkers();
+                    }
+                }, 1000); // 1초로 증가
             } catch (error) {
                 console.error('지도 초기화 실패:', error);
+                // 재시도 로직
+                setTimeout(() => {
+                    initialized.current = false;
+                    initializeMap();
+                }, 3000);
             }
         };
 
-        // T맵 라이브러리가 아직 로드되지 않았다면 주기적으로 확인
-        if (!window.Tmapv2) {
-            const checkTmap = setInterval(() => {
-                if (window.Tmapv2) {
-                    clearInterval(checkTmap);
-                    initializeMap();
-                }
-            }, 100);
+        initializeMap();
 
-            // 10초 후에도 로드되지 않으면 포기
-            setTimeout(() => {
-                clearInterval(checkTmap);
-                if (!window.Tmapv2) {
-                    console.error('T맵 라이브러리 로드 타임아웃');
+        // 언마운트 시 지도 및 오버레이 정리 (StrictMode에서 중복 생성 방지)
+        return () => {
+            try {
+                // 폴리라인/마커 해제
+                polylineRef.current.forEach((p) => p.setMap(null));
+                polylineRef.current = [];
+                markersRef.current.forEach((m) => m.setMap(null));
+                markersRef.current = [];
+                alertMarkersRef.current.forEach((m) => m.setMap(null));
+                alertMarkersRef.current = [];
+                if (currentLocationMarkerRef.current) {
+                    currentLocationMarkerRef.current.setMap(null);
+                    currentLocationMarkerRef.current = null;
                 }
-            }, 10000);
-        } else {
-            initializeMap();
-        }
+                // 컨테이너 비우기
+                const container = document.getElementById('mapDiv');
+                if (container) container.innerHTML = '';
+            } finally {
+                mapRef.current = null;
+                initialized.current = false;
+            }
+        };
+    }, []); // 컴포넌트 마운트 시 한 번만 실행
 
+    // 자동 업데이트 interval 관리
+    useEffect(() => {
         let interval;
         if (autoUpdate && mapRef.current) {
-            interval = setInterval(fetchTraffic, 180000);
+            interval = setInterval(() => {
+                if (mapRef.current) {
+                    fetchTraffic();
+                }
+            }, 180000); // 3분마다 업데이트
         }
 
         return () => {
             if (interval) clearInterval(interval);
         };
-    }, [autoUpdate]);
+    }, [autoUpdate, fetchTraffic]);
 
     // currentLocation이 변경될 때마다 현재 위치 마커 업데이트
     useEffect(() => {
