@@ -11,6 +11,52 @@ const Livemap = () => {
     const [prediction, setPrediction] = useState([]); // 예측 데이터
     const [alerts, setAlerts] = useState([]); // 실시간 알림
     const [popularPosts, setPopularPosts] = useState([]); // 인기게시물
+    const [currentLocation, setCurrentLocation] = useState({
+        latitude: null,
+        longitude: null,
+        loading: true,
+        error: null,
+    });
+
+    // 현재 위치 가져오기 함수
+    const getCurrentLocation = useCallback(() => {
+        setCurrentLocation((prev) => ({ ...prev, loading: true, error: null }));
+
+        if (!navigator.geolocation) {
+            setCurrentLocation({
+                latitude: null,
+                longitude: null,
+                loading: false,
+                error: 'Geolocation is not supported by this browser.',
+            });
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setCurrentLocation({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    loading: false,
+                    error: null,
+                });
+            },
+            (error) => {
+                console.error('Geolocation error:', error);
+                setCurrentLocation({
+                    latitude: null,
+                    longitude: null,
+                    loading: false,
+                    error: error.message,
+                });
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 300000, // 5분
+            }
+        );
+    }, []);
 
     // 좌표를 행정동으로 변환, 실패 시 기본값 사용
     const getAddressName = useCallback(async (lon, lat) => {
@@ -82,22 +128,39 @@ const Livemap = () => {
 
             setPosts(topPosts);
 
-            // 실시간 알림 백엔드 호출
-            const response = await axios.get('http://127.0.0.1:8000/');
-            const data = response.data;
-            const newAlerts = data.posts
-                .filter((post) => post.isAccidentNode === 'Y')
-                .map((post) => ({
-                    type: 'Y',
-                    message: post.description,
-                    traffictype: post.accidentUppercode,
-                    coordinates: post.coordinates,
-                }));
-            setAlerts(newAlerts);
-
-            setPrediction(data.prediction || []);
+            // 실시간 알림 백엔드 호출 (오류 처리 개선)
+            try {
+                const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://127.0.0.1:8000';
+                const response = await axios.get(`${API_BASE_URL}/`, {
+                    timeout: 5000 // 5초 타임아웃
+                });
+                const data = response.data;
+                const newAlerts = data.posts
+                    ?.filter((post) => post.isAccidentNode === 'Y')
+                    .map((post) => ({
+                        type: 'Y',
+                        message: post.description,
+                        traffictype: post.accidentUppercode,
+                        coordinates: post.coordinates,
+                    })) || [];
+                setAlerts(newAlerts);
+                setPrediction(data.prediction || []);
+            } catch (backendError) {
+                console.warn('백엔드 서버에 연결할 수 없습니다:', backendError.message);
+                // 백엔드 오류시 기본값 설정
+                setAlerts([]);
+                setPrediction(['백엔드 서버와 연결할 수 없습니다']);
+            }
         } catch (error) {
-            console.log('에러: ', error);
+            console.error('전체 데이터 로드 에러:', error);
+            // T맵 API 오류시 기본값 설정
+            setPosts([
+                { name: '1. 데이터를 불러올 수 없습니다' },
+                { name: '2. API 키를 확인해주세요' },
+                { name: '3. 네트워크 연결을 확인해주세요' }
+            ]);
+            setAlerts([]);
+            setPrediction(['데이터 로드 실패']);
         }
     }, [getAddressName]);
 
@@ -149,9 +212,10 @@ const Livemap = () => {
     const handleBack = () => navigate('/');
 
     useEffect(() => {
+        getCurrentLocation(); // 현재 위치 가져오기
         getPosts();
         loadPopularPosts(); // 인기게시물 로드 추가
-    }, [getPosts, loadPopularPosts]);
+    }, [getCurrentLocation, getPosts, loadPopularPosts]);
 
     return (
         <div className="traffic-page-container">
@@ -165,10 +229,39 @@ const Livemap = () => {
             </header>
 
             <div className="map-placeholder">
-                <Tmap popularPosts={popularPosts} alerts={alerts} />
+                <Tmap
+                    popularPosts={popularPosts}
+                    alerts={alerts}
+                    currentLocation={currentLocation}
+                    onRefreshLocation={getCurrentLocation}
+                />
             </div>
 
             <div className="sidebar">
+                <h3>📍 현재 위치</h3>
+                <div className="location-info">
+                    {currentLocation.loading ? (
+                        <p className="location-status loading">위치 정보를 가져오는 중...</p>
+                    ) : currentLocation.error ? (
+                        <div className="location-status error">
+                            <p>❌ 위치 정보를 가져올 수 없습니다</p>
+                            <p className="error-detail">{currentLocation.error}</p>
+                            <button className="refresh-location-btn" onClick={getCurrentLocation}>
+                                🔄 다시 시도
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="location-status success">
+                            <p>✅ 현재 위치 확인됨</p>
+                            <p className="coordinates">
+                                위도: {currentLocation.latitude?.toFixed(6)}
+                                <br />
+                                경도: {currentLocation.longitude?.toFixed(6)}
+                            </p>
+                        </div>
+                    )}
+                </div>
+
                 <h3>교통 혼잡도 TOP3</h3>
                 <ul className="legend-list">
                     {posts.map((post, index) => (

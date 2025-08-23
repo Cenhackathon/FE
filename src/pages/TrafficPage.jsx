@@ -10,83 +10,93 @@ const TrafficPage = () => {
     const [alerts, setAlerts] = useState([]); // 실시간 알림
 
     // 좌표를 행정동으로 변환, 실패 시 기본값 사용
-    const getAddressName = useCallback(
-        async (lon, lat) => {
+    const getAddressName = useCallback(async (lon, lat) => {
+        const TMAP_APP_KEY = process.env.REACT_APP_TMAP_API_KEY;
+        const url = `https://apis.openapi.sk.com/tmap/geo/reversegeocoding?version=1&lat=${lat}&lon=${lon}&coordType=WGS84GEO`;
+
+        try {
+            const res = await fetch(url, {
+                method: 'GET',
+                headers: { appKey: TMAP_APP_KEY },
+            });
+            const data = await res.json();
+            return data.addressInfo?.legalDong || data.addressInfo?.roadName || '알 수 없는 지역';
+        } catch (err) {
+            console.error('주소 변환 에러:', err);
+            return '알 수 없는 지역';
+        }
+    }, []);
+
+    const getPosts = useCallback(async () => {
+        try {
             const TMAP_APP_KEY = process.env.REACT_APP_TMAP_API_KEY;
-            const url = `https://apis.openapi.sk.com/tmap/geo/reversegeocoding?version=1&lat=${lat}&lon=${lon}&coordType=WGS84GEO`;
+            const tmapUrl = `https://apis.openapi.sk.com/tmap/traffic?version=1&reqCoordType=WGS84GEO&resCoordType=WGS84GEO&trafficType=AUTO&centerLon=127.0595&centerLat=37.5979&zoomLevel=15`;
+            const tmapResponse = await fetch(tmapUrl, {
+                method: 'GET',
+                headers: { appKey: TMAP_APP_KEY },
+            });
 
-            try {
-                const TMAP_APP_KEY = process.env.REACT_APP_TMAP_API_KEY;
-                const tmapUrl = `https://apis.openapi.sk.com/tmap/traffic?version=1&reqCoordType=WGS84GEO&resCoordType=WGS84GEO&trafficType=AUTO&centerLon=127.0595&centerLat=37.5979&zoomLevel=15`;
-                const tmapResponse = await fetch(tmapUrl, {
-                    method: 'GET',
-                    headers: { appKey: TMAP_APP_KEY },
+            if (!tmapResponse.ok) throw new Error(`HTTP error! status: ${tmapResponse.status}`);
+
+            const tmapData = await tmapResponse.json();
+            const features = tmapData.features || [];
+
+            const usedRoads = new Set();
+            const topPosts = [];
+
+            // 반복하며 중복 도로 제거, top3 확보
+            for (const feature of features
+                .filter((f) => f.geometry.type === 'LineString' && f.properties.congestion)
+                .sort((a, b) => b.properties.congestion - a.properties.congestion)) {
+                if (topPosts.length >= 3) break;
+
+                const props = feature.properties;
+                const coords = feature.geometry.coordinates;
+                const [lon, lat] = coords[0];
+
+                let roadName = '도로명 정보 없음';
+                if (props.name) roadName = props.name.split('/')[0];
+                else if (props.routeNo) roadName = `도로 번호 ${props.routeNo}`;
+                else if (props.linkId) roadName = `도로 ID ${props.linkId}`;
+
+                if (usedRoads.has(roadName)) continue; // 이미 나온 도로는 건너뛰기
+
+                const areaName = await getAddressName(lon, lat);
+
+                const congestionLevel =
+                    {
+                        1: '원활',
+                        2: '서행',
+                        3: '지체',
+                        4: '정체',
+                    }[props.congestion] || '정보 없음';
+
+                topPosts.push({
+                    name: `${roadName} (${areaName}) - ${congestionLevel}`,
                 });
-
-                if (!tmapResponse.ok) throw new Error(`HTTP error! status: ${tmapResponse.status}`);
-
-                const tmapData = await tmapResponse.json();
-                const features = tmapData.features || [];
-
-                const usedRoads = new Set();
-                const topPosts = [];
-
-                // 반복하며 중복 도로 제거, top3 확보
-                for (const feature of features
-                    .filter((f) => f.geometry.type === 'LineString' && f.properties.congestion)
-                    .sort((a, b) => b.properties.congestion - a.properties.congestion)) {
-                    if (topPosts.length >= 3) break;
-
-                    const props = feature.properties;
-                    const coords = feature.geometry.coordinates;
-                    const [lon, lat] = coords[0];
-
-                    let roadName = '도로명 정보 없음';
-                    if (props.name) roadName = props.name.split('/')[0];
-                    else if (props.routeNo) roadName = `도로 번호 ${props.routeNo}`;
-                    else if (props.linkId) roadName = `도로 ID ${props.linkId}`;
-
-                    if (usedRoads.has(roadName)) continue; // 이미 나온 도로는 건너뛰기
-
-                    const areaName = await getAddressName(lon, lat);
-
-                    const congestionLevel =
-                        {
-                            1: '원활',
-                            2: '서행',
-                            3: '지체',
-                            4: '정체',
-                        }[props.congestion] || '정보 없음';
-
-                    topPosts.push({
-                        name: `${roadName} (${areaName}) - ${congestionLevel}`,
-                    });
-                    usedRoads.add(roadName);
-                }
-
-                setPosts(topPosts);
-
-                // 실시간 알림 백엔드 호출
-                const response = await fetch('http://127.0.0.1:8000/');
-                const data = await response.json();
-                const newAlerts = data.posts
-                    .filter((post) => post.isAccidentNode === 'Y')
-                    .map((post) => ({
-                        type: 'Y',
-                        message: post.description,
-                        traffictype: post.accidentUppercode,
-                        coordinates: post.coordinates,
-                    }));
-                setAlerts(newAlerts);
-
-                setPrediction(data.prediction || []);
-            } catch (error) {
-                console.log('에러: ', error);
+                usedRoads.add(roadName);
             }
-        },
-        [getAddressName, setPosts, setAlerts, setPrediction]
-    );
 
+            setPosts(topPosts);
+
+            // 실시간 알림 백엔드 호출
+            const response = await fetch('http://127.0.0.1:8000/');
+            const data = await response.json();
+            const newAlerts = data.posts
+                .filter((post) => post.isAccidentNode === 'Y')
+                .map((post) => ({
+                    type: 'Y',
+                    message: post.description,
+                    traffictype: post.accidentUppercode,
+                    coordinates: post.coordinates,
+                }));
+            setAlerts(newAlerts);
+
+            setPrediction(data.prediction || []);
+        } catch (error) {
+            console.log('에러: ', error);
+        }
+    }, [getAddressName]);
     const handleBack = () => navigate('/');
 
     useEffect(() => {

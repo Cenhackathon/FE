@@ -306,3 +306,73 @@
     text-align: center;
     padding: 1rem;
 }
+
+/* 위치 정보 스타일 */
+.location-info {
+    margin-bottom: 1rem;
+}
+
+.location-status {
+    padding: 0.8rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.location-status.loading {
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: #6366f1;
+}
+
+.location-status.error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+}
+
+.location-status.success {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #22c55e;
+}
+
+.location-status p {
+    margin: 0.3rem 0;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.error-detail {
+    font-size: 0.8rem !important;
+    opacity: 0.8;
+    font-weight: 400 !important;
+}
+
+.coordinates {
+    font-family: monospace;
+    font-size: 0.8rem !important;
+    opacity: 0.8;
+    font-weight: 400 !important;
+}
+
+.refresh-location-btn {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 0.5rem;
+}
+
+.refresh-location-btn:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    transform: translateY(-1px);
+}
+
+.refresh-location-btn:active {
+    transform: translateY(0);
+}

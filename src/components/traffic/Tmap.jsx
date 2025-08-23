@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const Tmap = ({ popularPosts = [], currentLocation = null, alerts = [] }) => {
+const Tmap = ({ popularPosts = [], currentLocation = null, alerts = [], onRefreshLocation }) => {
     const navigate = useNavigate();
     const mapRef = useRef(null);
     const initialized = useRef(false);
@@ -19,6 +19,11 @@ const Tmap = ({ popularPosts = [], currentLocation = null, alerts = [] }) => {
         try {
             const TMAP_APP_KEY = process.env.REACT_APP_TMAP_API_KEY;
 
+            if (!TMAP_APP_KEY || TMAP_APP_KEY === 'your_tmap_api_key_here') {
+                console.warn('T맵 API 키가 설정되지 않았습니다.');
+                return;
+            }
+
             // URLSearchParams를 사용해 쿼리 파라미터 구성
             const url = new URL('https://apis.openapi.sk.com/tmap/traffic');
             url.searchParams.append('version', '1');
@@ -30,7 +35,14 @@ const Tmap = ({ popularPosts = [], currentLocation = null, alerts = [] }) => {
             url.searchParams.append('centerLat', '37.5979');
             url.searchParams.append('appKey', TMAP_APP_KEY);
 
-            const res = await fetch(url.toString());
+            const res = await fetch(url.toString(), {
+                timeout: 10000 // 10초 타임아웃
+            });
+            
+            if (!res.ok) {
+                throw new Error(`T맵 API 오류: ${res.status} ${res.statusText}`);
+            }
+            
             const data = await res.json();
 
             const features = data.features || [];
@@ -91,7 +103,7 @@ const Tmap = ({ popularPosts = [], currentLocation = null, alerts = [] }) => {
     }, [alerts]);
 
     // 인기게시물 마커 생성/갱신 함수
-    const updatePopularPostMarkers = () => {
+    const updatePopularPostMarkers = useCallback(() => {
         console.log('updatePopularPostMarkers 호출:', {
             mapRef: !!mapRef.current,
             popularPostsCount: popularPosts.length,
@@ -190,17 +202,17 @@ const Tmap = ({ popularPosts = [], currentLocation = null, alerts = [] }) => {
         });
 
         console.log(`총 ${markersRef.current.length}개의 인기게시물 마커 생성됨`);
-    };
+    }, [popularPosts]);
 
     // 현재 위치 마커 업데이트
-    const updateCurrentLocationMarker = () => {
+    const updateCurrentLocationMarker = useCallback(() => {
         console.log('updateCurrentLocationMarker 호출:', {
             mapRef: !!mapRef.current,
             currentLocation,
         });
 
-        if (!mapRef.current || !currentLocation || currentLocation.loading) {
-            console.log('마커 업데이트 조건 미충족');
+        if (!mapRef.current || !window.Tmapv2) {
+            console.log('지도 또는 Tmapv2 라이브러리 없음');
             return;
         }
 
@@ -210,90 +222,156 @@ const Tmap = ({ popularPosts = [], currentLocation = null, alerts = [] }) => {
             console.log('기존 마커 제거됨');
         }
 
-        // 에러가 있으면 기본 위치 사용, 없으면 현재 위치 사용
-        const markerPosition = currentLocation.error
-            ? new window.Tmapv2.LatLng(37.5979, 127.0595) // 기본 위치
-            : new window.Tmapv2.LatLng(currentLocation.latitude, currentLocation.longitude);
+        // 위치 정보가 로딩 중이거나 없으면 기본 위치 마커 표시
+        let markerPosition, markerTitle, markerIcon;
 
-        const markerTitle = currentLocation.error ? '기본 위치 (한국외국어대학교)' : '현재 위치';
-        const markerColor = currentLocation.error ? '#dc3545' : '#4285F4'; // 에러시 빨간색, 정상시 파란색
+        if (currentLocation.loading) {
+            // 로딩 중이면 아직 마커 표시하지 않음
+            console.log('위치 정보 로딩 중, 마커 표시 대기');
+            return;
+        } else if (currentLocation.error || !currentLocation.latitude || !currentLocation.longitude) {
+            // 에러가 있거나 위치 정보가 없으면 기본 위치 사용
+            markerPosition = new window.Tmapv2.LatLng(37.5979, 127.0595); // 한국외국어대학교
+            markerTitle = `위치 정보 없음 (기본 위치: 한국외국어대학교)${
+                currentLocation.error ? ` - ${currentLocation.error}` : ''
+            }`;
+            markerIcon = {
+                url:
+                    'data:image/svg+xml;charset=UTF-8,' +
+                    encodeURIComponent(`
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#dc3545">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    </svg>
+                `),
+                size: new window.Tmapv2.Size(24, 24),
+                anchor: new window.Tmapv2.Point(12, 24),
+            };
+        } else {
+            // 정상적으로 위치 정보를 받아온 경우
+            markerPosition = new window.Tmapv2.LatLng(currentLocation.latitude, currentLocation.longitude);
+            markerTitle = '현재 위치';
+            markerIcon = {
+                url:
+                    'data:image/svg+xml;charset=UTF-8,' +
+                    encodeURIComponent(`
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#4285F4">
+                        <circle cx="12" cy="12" r="8" fill="#4285F4" stroke="#ffffff" stroke-width="2"/>
+                        <circle cx="12" cy="12" r="3" fill="#ffffff"/>
+                    </svg>
+                `),
+                size: new window.Tmapv2.Size(24, 24),
+                anchor: new window.Tmapv2.Point(12, 12),
+            };
+        }
 
-        console.log('마커 생성 중:', { markerTitle, markerColor, position: markerPosition });
+        console.log('마커 생성 중:', { markerTitle, position: markerPosition });
 
-        // 새로운 현재 위치 마커 추가 (기본 마커 사용)
+        // 새로운 현재 위치 마커 추가
         const marker = new window.Tmapv2.Marker({
             position: markerPosition,
             map: mapRef.current,
             title: markerTitle,
+            icon: markerIcon,
         });
 
         currentLocationMarkerRef.current = marker;
         console.log('새 마커 생성 완료:', marker);
 
-        // 지도 중심을 마커 위치로 이동 (부드러운 이동)
-        mapRef.current.panTo(markerPosition);
-    };
+        // 현재 위치를 받아온 경우에만 지도 중심을 이동
+        if (!currentLocation.error && currentLocation.latitude && currentLocation.longitude) {
+            mapRef.current.panTo(markerPosition);
+            console.log('지도 중심을 현재 위치로 이동');
+        }
+    }, [currentLocation]);
 
     // 지도 초기화
     useEffect(() => {
-        if (!window.Tmapv2 || initialized.current) return;
+        // T맵 라이브러리가 로드될 때까지 대기
+        const initializeMap = () => {
+            if (!window.Tmapv2 || initialized.current) {
+                return;
+            }
 
-        console.log('지도 초기화 시작');
+            try {
+                console.log('지도 초기화 시작');
 
-        // 기본 중심 위치 (한국외국어대학교)
-        const initialCenter = new window.Tmapv2.LatLng(37.5979, 127.0595);
+                // 기본 중심 위치 (한국외국어대학교)
+                const initialCenter = new window.Tmapv2.LatLng(37.5979, 127.0595);
 
-        const map = new window.Tmapv2.Map('mapDiv', {
-            center: initialCenter,
-            width: '100%',
-            height: '100%',
-            zoom: 14,
-        });
-        mapRef.current = map;
-        initialized.current = true;
+                const map = new window.Tmapv2.Map('mapDiv', {
+                    center: initialCenter,
+                    width: '100%',
+                    height: '100%',
+                    zoom: 14,
+                });
+                mapRef.current = map;
+                initialized.current = true;
 
-        console.log('지도 생성 완료:', map);
+                console.log('지도 생성 완료:', map);
 
-        // 기본 테스트 마커 추가 (한국외국어대학교)
-        const testMarker = new window.Tmapv2.Marker({
-            position: new window.Tmapv2.LatLng(37.5979, 127.0595),
-            map: map,
-            title: '한국외국어대학교 (테스트 마커)',
-        });
-        console.log('테스트 마커 추가됨:', testMarker);
+                // 약간의 지연 후 마커들 추가 (지도 렌더링 완료 대기)
+                setTimeout(() => {
+                    fetchTraffic();
+                    updatePopularPostMarkers();
+                    updateCurrentLocationMarker();
+                    addAlertMarkers();
+                }, 100);
 
-        // 약간의 지연 후 마커들 추가 (지도 렌더링 완료 대기)
-        setTimeout(() => {
-            fetchTraffic();
-            updatePopularPostMarkers();
-            updateCurrentLocationMarker();
-            addAlertMarkers();
-        }, 100);
+            } catch (error) {
+                console.error('지도 초기화 실패:', error);
+            }
+        };
+
+        // T맵 라이브러리가 아직 로드되지 않았다면 주기적으로 확인
+        if (!window.Tmapv2) {
+            const checkTmap = setInterval(() => {
+                if (window.Tmapv2) {
+                    clearInterval(checkTmap);
+                    initializeMap();
+                }
+            }, 100);
+
+            // 10초 후에도 로드되지 않으면 포기
+            setTimeout(() => {
+                clearInterval(checkTmap);
+                if (!window.Tmapv2) {
+                    console.error('T맵 라이브러리 로드 타임아웃');
+                }
+            }, 10000);
+        } else {
+            initializeMap();
+        }
 
         let interval;
-        if (autoUpdate) interval = setInterval(fetchTraffic, 180000);
+        if (autoUpdate && mapRef.current) {
+            interval = setInterval(fetchTraffic, 180000);
+        }
 
-        return () => clearInterval(interval);
-    }, [autoUpdate, fetchTraffic]);
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [autoUpdate]);
 
     // currentLocation이 변경될 때마다 현재 위치 마커 업데이트
     useEffect(() => {
-        if (mapRef.current) {
+        if (mapRef.current && window.Tmapv2) {
             updateCurrentLocationMarker();
         }
     }, [currentLocation]);
 
     // popularPosts가 변경될 때마다 마커 업데이트
     useEffect(() => {
-        updatePopularPostMarkers();
+        if (mapRef.current && window.Tmapv2) {
+            updatePopularPostMarkers();
+        }
     }, [popularPosts]);
 
     // alerts가 변경될 때마다 알림 마커 업데이트
     useEffect(() => {
-        if (mapRef.current) {
+        if (mapRef.current && window.Tmapv2) {
             addAlertMarkers();
         }
-    }, [addAlertMarkers]);
+    }, [alerts]);
 
     // 게시물 상세페이지 이동 이벤트 리스너
     useEffect(() => {
@@ -311,8 +389,10 @@ const Tmap = ({ popularPosts = [], currentLocation = null, alerts = [] }) => {
 
     // trafficVisible 변경 시 새로 Polyline 그리기
     useEffect(() => {
-        fetchTraffic();
-    }, [fetchTraffic]);
+        if (mapRef.current && window.Tmapv2) {
+            fetchTraffic();
+        }
+    }, [trafficVisible]);
 
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative' }}>
@@ -324,6 +404,16 @@ const Tmap = ({ popularPosts = [], currentLocation = null, alerts = [] }) => {
                 <button className="top-right-button" onClick={() => setAutoUpdate((prev) => !prev)}>
                     {autoUpdate ? '자동 갱신 OFF' : '자동 갱신 ON'}
                 </button>
+                {onRefreshLocation && (
+                    <button
+                        className="top-right-button"
+                        onClick={onRefreshLocation}
+                        disabled={currentLocation?.loading}
+                        title="현재 위치 새로고침"
+                    >
+                        📍 {currentLocation?.loading ? '위치 찾는 중...' : '위치 새로고침'}
+                    </button>
+                )}
             </div>
         </div>
     );

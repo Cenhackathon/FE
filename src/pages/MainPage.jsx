@@ -7,12 +7,6 @@ import '../styles/MainPage.css';
 function MainPage() {
     const navigate = useNavigate();
     const [popularPosts, setPopularPosts] = useState([]);
-    const [currentLocation, setCurrentLocation] = useState({
-        latitude: 37.5979, // 기본값: 한국외국어대학교
-        longitude: 127.0595,
-        loading: true,
-        error: null,
-    });
 
     const handleLivemapClick = () => {
         navigate('/livemap');
@@ -30,145 +24,10 @@ function MainPage() {
         navigate('/weather');
     };
 
-<<<<<<< HEAD
-    // 컴포넌트 마운트시 현재 위치 및 인기게시물 로드
-=======
-    const [posts, setPosts] = useState([]); // 교통혼잡도 top3
-
-    // 좌표를 행정동으로 변환, 실패 시 기본값 사용
-    const getAddressName = async (lon, lat) => {
-        const TMAP_APP_KEY = process.env.REACT_APP_TMAP_API_KEY;
-        const url = `https://apis.openapi.sk.com/tmap/geo/reversegeocoding?version=1&lat=${lat}&lon=${lon}&coordType=WGS84GEO`;
-
-        try {
-            const res = await fetch(url, {
-                method: 'GET',
-                headers: { 'appKey': TMAP_APP_KEY }
-            });
-            const data = await res.json();
-            return data.addressInfo?.legalDong || data.addressInfo?.roadName || '알 수 없는 지역';
-        } catch (err) {
-            console.error("주소 변환 에러:", err);
-            return '알 수 없는 지역';
-        }
-    };
-
-    const getPosts = async () => {
-        try {
-            const TMAP_APP_KEY = process.env.REACT_APP_TMAP_API_KEY;
-            const tmapUrl = `https://apis.openapi.sk.com/tmap/traffic?version=1&reqCoordType=WGS84GEO&resCoordType=WGS84GEO&trafficType=AUTO&centerLon=127.0595&centerLat=37.5979&zoomLevel=15`;
-            const tmapResponse = await fetch(tmapUrl, {
-                method: 'GET',
-                headers: { 'appKey': TMAP_APP_KEY }
-            });
-
-            if (!tmapResponse.ok) throw new Error(`HTTP error! status: ${tmapResponse.status}`);
-
-            const tmapData = await tmapResponse.json();
-            const features = tmapData.features || [];
-
-            const usedRoads = new Set();
-            const topPosts = [];
-
-            // 반복하며 중복 도로 제거, top3 확보
-            for (const feature of features
-                .filter(f => f.geometry.type === 'LineString' && f.properties.congestion)
-                .sort((a, b) => b.properties.congestion - a.properties.congestion)) {
-
-                if (topPosts.length >= 3) break;
-
-                const props = feature.properties;
-                const coords = feature.geometry.coordinates;
-                const [lon, lat] = coords[0];
-
-                let roadName = '도로명 정보 없음';
-                if (props.name) roadName = props.name.split('/')[0];
-                else if (props.routeNo) roadName = `도로 번호 ${props.routeNo}`;
-                else if (props.linkId) roadName = `도로 ID ${props.linkId}`;
-
-                if (usedRoads.has(roadName)) continue; // 이미 나온 도로는 건너뛰기
-
-                const areaName = await getAddressName(lon, lat);
-
-                const congestionLevel = {
-                    1: '원활',
-                    2: '서행',
-                    3: '지체',
-                    4: '정체'
-                }[props.congestion] || '정보 없음';
-
-                topPosts.push({
-                    name: `${roadName} (${areaName}) - ${congestionLevel}`
-                });
-                usedRoads.add(roadName);
-            }
-
-            setPosts(topPosts);
-        } catch (error) {
-            console.log('에러: ', error);
-        }
-    };
-    
-
     // 컴포넌트 마운트시 인기게시물 로드
->>>>>>> 0622934998a2aaf13adfb8c6e23369d117230b02
     useEffect(() => {
-        getCurrentLocation();
         loadPopularPosts();
-        getPosts();
     }, []);
-
-    // 현재 위치 가져오기
-    const getCurrentLocation = () => {
-        if (!navigator.geolocation) {
-            setCurrentLocation((prev) => ({
-                ...prev,
-                loading: false,
-                error: 'Geolocation이 지원되지 않습니다.',
-            }));
-            return;
-        }
-
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                setCurrentLocation({
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude,
-                    loading: false,
-                    error: null,
-                });
-                console.log('현재 위치:', position.coords.latitude, position.coords.longitude);
-            },
-            (error) => {
-                console.error('위치 정보 가져오기 실패:', error);
-                let errorMessage = '';
-                switch (error.code) {
-                    case error.PERMISSION_DENIED:
-                        errorMessage = '위치 접근이 거부되었습니다.';
-                        break;
-                    case error.POSITION_UNAVAILABLE:
-                        errorMessage = '위치 정보를 사용할 수 없습니다.';
-                        break;
-                    case error.TIMEOUT:
-                        errorMessage = '위치 정보 요청이 시간 초과되었습니다.';
-                        break;
-                    default:
-                        errorMessage = '위치 정보를 가져오는 중 오류가 발생했습니다.';
-                        break;
-                }
-                setCurrentLocation((prev) => ({
-                    ...prev,
-                    loading: false,
-                    error: errorMessage,
-                }));
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 60000,
-            }
-        );
-    };
 
     // 인기 게시물 로드 함수
     const loadPopularPosts = async () => {
@@ -219,7 +78,7 @@ function MainPage() {
         <div className="main-page">
             {/* Header with Navigation */}
             <header className="header">
-                <h1 className="title">동대문을 열어라.</h1>
+                <h1 className="title">Seoul AI 상황실</h1>
             </header>
 
             {/* Main Dashboard Content */}
@@ -230,35 +89,13 @@ function MainPage() {
                     <section className="map-section">
                         <div className="section-header" onClick={handleLivemapClick} style={{ cursor: 'pointer' }}>
                             <h2>실시간 지도</h2>
-<<<<<<< HEAD
                             <div className="section-controls">
-                                <div className="location-status">
-                                    {currentLocation.loading ? (
-                                        <span className="location-loading">📍 위치 찾는 중...</span>
-                                    ) : currentLocation.error ? (
-                                        <span className="location-error" title={currentLocation.error}>
-                                            📍 위치 오류
-                                        </span>
-                                    ) : (
-                                        <span className="location-success">📍 현재 위치</span>
-                                    )}
-                                </div>
-                                <button
-                                    className="control-btn"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        getCurrentLocation();
-                                    }}
-                                >
-                                    🔄
-                                </button>
+                                <button className="control-btn">🔄</button>
                                 <button className="control-btn">⚙️</button>
                             </div>
-=======
->>>>>>> 0622934998a2aaf13adfb8c6e23369d117230b02
                         </div>
                         <div className="map-container">
-                            <Tmap popularPosts={popularPosts} currentLocation={currentLocation} />
+                            <Tmap popularPosts={popularPosts} />
                         </div>
                     </section>
 
@@ -358,13 +195,11 @@ function MainPage() {
                                     <h4>교통 혼잡도 TOP3</h4>
                                 </div>
 
-                                <ul className="traffic-list">
-                                    {posts.map((post, index) => (
-                                        <li key={index}>
-                                        {`${index + 1}. ${post.name}`}
-                                        </li>
-                                    ))}
-                                </ul>
+                                <ol className="traffic-list">
+                                    <li className="traffic-item">1. 이문동 </li>
+                                    <li className="traffic-item">2. 회기동 </li>
+                                    <li className="traffic-item">3. 휘경동 </li>
+                                </ol>
                             </div>
 
                             <div className="traffic-right">
