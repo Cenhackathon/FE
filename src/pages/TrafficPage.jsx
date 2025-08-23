@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/TrafficPageStyles.css';
 import Tmap from '../components/traffic/Tmap';
@@ -10,7 +10,7 @@ const TrafficPage = () => {
     const [alerts, setAlerts] = useState([]); // 실시간 알림
 
     // 좌표를 행정동으로 변환, 실패 시 기본값 사용
-    const getAddressName = async (lon, lat) => {
+    const getAddressName = useCallback(async (lon, lat) => {
         const TMAP_APP_KEY = process.env.REACT_APP_TMAP_API_KEY;
         const url = `https://apis.openapi.sk.com/tmap/geo/reversegeocoding?version=1&lat=${lat}&lon=${lon}&coordType=WGS84GEO`;
 
@@ -25,9 +25,9 @@ const TrafficPage = () => {
             console.error("주소 변환 에러:", err);
             return '알 수 없는 지역';
         }
-    };
+    }, []);
 
-    const getPosts = async () => {
+    const getPosts = useCallback(async () => {
         try {
             const TMAP_APP_KEY = process.env.REACT_APP_TMAP_API_KEY;
             const tmapUrl = `https://apis.openapi.sk.com/tmap/traffic?version=1&reqCoordType=WGS84GEO&resCoordType=WGS84GEO&trafficType=AUTO&centerLon=127.0595&centerLat=37.5979&zoomLevel=15`;
@@ -97,13 +97,13 @@ const TrafficPage = () => {
         } catch (error) {
             console.log('에러: ', error);
         }
-    };
+    }, [getAddressName, setPosts, setAlerts, setPrediction]);
 
     const handleBack = () => navigate('/');
 
     useEffect(() => {
         getPosts();
-    }, []);
+    }, [getPosts]);
 
     return (
         <div className="traffic-page-container">
