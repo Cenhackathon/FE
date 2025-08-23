@@ -33,8 +33,13 @@ function PostDetailPage() {
         setLoading(true);
         setError(null);
         try {
-            const baseUrl = 'http://127.0.0.1:8000';
-            const response = await fetch(`${baseUrl}/community/${postId}/`);
+            const baseUrl = 'https://openddm.store';
+            const response = await fetch(`${baseUrl}/community/${postId}/`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(currentUser?.token && { Authorization: `Token ${currentUser.token}` }),
+                },
+            });
 
             if (response.ok) {
                 const data = await response.json();

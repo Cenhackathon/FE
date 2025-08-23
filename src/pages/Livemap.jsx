@@ -13,7 +13,7 @@ const Livemap = () => {
     const getPosts = async () => {
         // 백엔드 보고 맞춰야함
         try {
-            const response = await axios.get('http://127.0.0.1:8000/');
+            const response = await axios.get('https://openddm.store/');
             const data = response.data;
             console.log('응답완료');
 

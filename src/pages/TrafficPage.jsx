@@ -12,7 +12,7 @@ const TrafficPage = () => {
     const getPosts = async () => {
         // 백엔드 보고 맞춰야함
         try {
-            const response = await fetch('http://127.0.0.1:8000/');
+            const response = await fetch('https://openddm.store/');
             const data = await response.json();
             console.log('응답완료');
 
@@ -77,9 +77,7 @@ const TrafficPage = () => {
 
                 <h3>예측 데이터</h3>
                 <ul className="legend-list">
-                    <p className="prediction-text">
-                        도로 혼잡 예상 구간: {prediction.join(', ')}
-                    </p>
+                    <p className="prediction-text">도로 혼잡 예상 구간: {prediction.join(', ')}</p>
                 </ul>
 
                 <h3>실시간 알림</h3>

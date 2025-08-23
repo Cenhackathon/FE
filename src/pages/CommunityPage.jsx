@@ -58,11 +58,16 @@ function CommunityPage() {
         setLoading(true);
         setError(null);
         try {
-            const baseUrl = 'http://127.0.0.1:8000';
+            const baseUrl = 'https://openddm.store';
             const orderBy = sortBy === 'latest' ? 'created_at' : 'likes'; // API 명세에 맞는 정렬 파라미터
             const categoryParam = activeCategory === '전체' ? '' : `/${getCategoryAPIValue(activeCategory)}`;
 
-            const response = await fetch(`${baseUrl}/community/list/${orderBy}${categoryParam}/`);
+            const response = await fetch(`${baseUrl}/community/list/${orderBy}${categoryParam}/`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(currentUser?.token && { Authorization: `Token ${currentUser.token}` }),
+                },
+            });
 
             if (response.ok) {
                 const data = await response.json();
@@ -268,7 +273,7 @@ function CommunityPage() {
 
         try {
             // TODO: 백엔드 배포시 실제 API URL로 교체
-            const baseUrl = 'http://127.0.0.1:8000';
+            const baseUrl = 'https://openddm.store';
 
             // API 명세서에 따른 카테고리 매핑
             const categoryMap = {
