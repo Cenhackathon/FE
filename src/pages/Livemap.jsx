@@ -20,12 +20,12 @@ const Livemap = () => {
         try {
             const res = await fetch(url, {
                 method: 'GET',
-                headers: { 'appKey': TMAP_APP_KEY }
+                headers: { appKey: TMAP_APP_KEY },
             });
             const data = await res.json();
             return data.addressInfo?.legalDong || data.addressInfo?.roadName || '알 수 없는 지역';
         } catch (err) {
-            console.error("주소 변환 에러:", err);
+            console.error('주소 변환 에러:', err);
             return '알 수 없는 지역';
         }
     }, []);
@@ -36,7 +36,7 @@ const Livemap = () => {
             const tmapUrl = `https://apis.openapi.sk.com/tmap/traffic?version=1&reqCoordType=WGS84GEO&resCoordType=WGS84GEO&trafficType=AUTO&centerLon=127.0595&centerLat=37.5979&zoomLevel=15`;
             const tmapResponse = await fetch(tmapUrl, {
                 method: 'GET',
-                headers: { 'appKey': TMAP_APP_KEY }
+                headers: { appKey: TMAP_APP_KEY },
             });
 
             if (!tmapResponse.ok) throw new Error(`HTTP error! status: ${tmapResponse.status}`);
@@ -49,9 +49,8 @@ const Livemap = () => {
 
             // 반복하며 중복 도로 제거, top3 확보
             for (const feature of features
-                .filter(f => f.geometry.type === 'LineString' && f.properties.congestion)
+                .filter((f) => f.geometry.type === 'LineString' && f.properties.congestion)
                 .sort((a, b) => b.properties.congestion - a.properties.congestion)) {
-
                 if (topPosts.length >= 3) break;
 
                 const props = feature.properties;
@@ -67,15 +66,16 @@ const Livemap = () => {
 
                 const areaName = await getAddressName(lon, lat);
 
-                const congestionLevel = {
-                    1: '원활',
-                    2: '서행',
-                    3: '지체',
-                    4: '정체'
-                }[props.congestion] || '정보 없음';
+                const congestionLevel =
+                    {
+                        1: '원활',
+                        2: '서행',
+                        3: '지체',
+                        4: '정체',
+                    }[props.congestion] || '정보 없음';
 
                 topPosts.push({
-                    name: `${roadName} (${areaName}) - ${congestionLevel}`
+                    name: `${roadName} (${areaName}) - ${congestionLevel}`,
                 });
                 usedRoads.add(roadName);
             }
@@ -86,8 +86,8 @@ const Livemap = () => {
             const response = await axios.get('http://127.0.0.1:8000/');
             const data = response.data;
             const newAlerts = data.posts
-                .filter(post => post.isAccidentNode === 'Y')
-                .map(post => ({
+                .filter((post) => post.isAccidentNode === 'Y')
+                .map((post) => ({
                     type: 'Y',
                     message: post.description,
                     traffictype: post.accidentUppercode,
@@ -96,7 +96,6 @@ const Livemap = () => {
             setAlerts(newAlerts);
 
             setPrediction(data.prediction || []);
-
         } catch (error) {
             console.log('에러: ', error);
         }
@@ -173,24 +172,29 @@ const Livemap = () => {
                 <h3>교통 혼잡도 TOP3</h3>
                 <ul className="legend-list">
                     {posts.map((post, index) => (
-                        <li key={index}>
-                            {`${index + 1}. ${post.name}`}
-                        </li>
+                        <li key={index}>{`${index + 1}. ${post.name}`}</li>
                     ))}
                 </ul>
 
                 <h3>예측 데이터</h3>
                 <ul className="legend-list">
-                    <p className="prediction-text">
-                        도로 혼잡 예상 구간: {prediction.join(', ')}
-                    </p>
+                    <p className="prediction-text">도로 혼잡 예상 구간: {prediction.join(', ')}</p>
                 </ul>
 
                 <h3>실시간 알림</h3>
                 <ul className="legend-list">
                     {alerts.map((alert, index) => (
-                        <div key={index} className={alert.type === 'Y' && (alert.traffictype === 'A' || alert.traffictype === 'D') ? 'alert-box-red' : 'alert-box-yellow'}>
-                            {alert.type === 'Y' && (alert.traffictype === 'A' || alert.traffictype === 'D') ? '🚨 ' : '🚧 '}
+                        <div
+                            key={index}
+                            className={
+                                alert.type === 'Y' && (alert.traffictype === 'A' || alert.traffictype === 'D')
+                                    ? 'alert-box-red'
+                                    : 'alert-box-yellow'
+                            }
+                        >
+                            {alert.type === 'Y' && (alert.traffictype === 'A' || alert.traffictype === 'D')
+                                ? '🚨 '
+                                : '🚧 '}
                             {alert.message}
                         </div>
                     ))}

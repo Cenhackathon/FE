@@ -70,15 +70,15 @@ const Tmap = ({ popularPosts = [], currentLocation = null, alerts = [] }) => {
 
     // 알림에 따라 마커 추가
     const addAlertMarkers = useCallback(() => {
-        if(!mapRef.current || !window.Tmapv2) return;
+        if (!mapRef.current || !window.Tmapv2) return;
 
         // 기존 알림 마커 제거
-        alertMarkersRef.current.forEach(marker => marker.setMap(null));
+        alertMarkersRef.current.forEach((marker) => marker.setMap(null));
         alertMarkersRef.current = [];
 
         // 알림에 따라 마커 추가
-        alerts.forEach(alert => {
-            if(alert.coordinates && alert.coordinates.length === 2){
+        alerts.forEach((alert) => {
+            if (alert.coordinates && alert.coordinates.length === 2) {
                 const [lon, lat] = alert.coordinates;
                 const marker = new window.Tmapv2.Marker({
                     position: new window.Tmapv2.LatLng(lat, lon),
