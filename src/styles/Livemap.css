@@ -13,7 +13,7 @@
     border-radius: 14px;
     overflow: hidden;
     position: relative;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     height: 85vh;
     margin-top: 6rem;
 }
@@ -32,7 +32,7 @@
     margin: 1rem;
     padding: 1.5rem;
     border-radius: 14px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     display: flex;
     flex-direction: column;
     gap: 1rem;
@@ -71,23 +71,23 @@
     height: 1.4rem;
     border-radius: 4px;
     margin-right: 0.8rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .red-box {
-    background-color: #D61125;
+    background-color: #d61125;
 }
 
 .orange-box {
-    background-color: #E87506;
+    background-color: #e87506;
 }
 
 .yellow-box {
-    background-color: #FFFF00;
+    background-color: #ffff00;
 }
 
 .green-box {
-    background-color: #61AB25;
+    background-color: #61ab25;
 }
 
 /* 예측 텍스트 */
@@ -97,17 +97,18 @@
     background-color: #eef2ff;
     padding: 0.5rem;
     border-radius: 8px;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* 알림 박스 */
-.alert-box-red, .alert-box-yellow {
+.alert-box-red,
+.alert-box-yellow {
     padding: 0.6rem 0.8rem;
     margin-bottom: 0.5rem;
     border-radius: 8px;
     font-size: 0.9rem;
     font-weight: 600;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .alert-box-red {
@@ -128,12 +129,12 @@
 }
 
 .sidebar::-webkit-scrollbar-thumb {
-    background-color: rgba(100,100,150,0.5);
+    background-color: rgba(100, 100, 150, 0.5);
     border-radius: 4px;
 }
 
 .sidebar::-webkit-scrollbar-track {
-    background-color: rgba(0,0,0,0.05);
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
 /* 지도 위 버튼 예시 */
@@ -179,7 +180,7 @@
     left: 0;
     width: 100%;
     z-index: 1000;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .header-left {
@@ -216,4 +217,92 @@
     font-weight: 700;
     margin: 0;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* 인기 게시물 스타일 */
+.popular-posts-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.popular-post-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    border-left: 3px solid #ff6b6b;
+    transition: all 0.3s ease;
+}
+
+.popular-post-item:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateX(5px);
+}
+
+.post-rank {
+    background: linear-gradient(135deg, #ff6b6b, #ffa500);
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    min-width: 25px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+}
+
+.post-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.post-title-small {
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.post-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.post-category {
+    background: rgba(102, 126, 234, 0.8);
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.post-likes {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.post-location {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.7rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.no-popular-posts-msg {
+    color: rgba(255, 255, 255, 0.6);
+    font-style: italic;
+    text-align: center;
+    padding: 1rem;
 }

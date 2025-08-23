@@ -599,3 +599,37 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.6);
 }
+
+/* Location Status Styles */
+.location-status {
+    margin-right: 1rem;
+}
+
+.location-loading {
+    color: #ffc107;
+    font-size: 0.8rem;
+    font-weight: 500;
+    animation: pulse 1.5s ease-in-out infinite alternate;
+}
+
+.location-error {
+    color: #dc3545;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: help;
+}
+
+.location-success {
+    color: #28a745;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.6;
+    }
+    100% {
+        opacity: 1;
+    }
+}

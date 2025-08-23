@@ -7,6 +7,12 @@ import '../styles/MainPage.css';
 function MainPage() {
     const navigate = useNavigate();
     const [popularPosts, setPopularPosts] = useState([]);
+    const [currentLocation, setCurrentLocation] = useState({
+        latitude: 37.5979, // 기본값: 한국외국어대학교
+        longitude: 127.0595,
+        loading: true,
+        error: null,
+    });
 
     const handleLivemapClick = () => {
         navigate('/livemap');
@@ -24,10 +30,63 @@ function MainPage() {
         navigate('/weather');
     };
 
-    // 컴포넌트 마운트시 인기게시물 로드
+    // 컴포넌트 마운트시 현재 위치 및 인기게시물 로드
     useEffect(() => {
+        getCurrentLocation();
         loadPopularPosts();
     }, []);
+
+    // 현재 위치 가져오기
+    const getCurrentLocation = () => {
+        if (!navigator.geolocation) {
+            setCurrentLocation((prev) => ({
+                ...prev,
+                loading: false,
+                error: 'Geolocation이 지원되지 않습니다.',
+            }));
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setCurrentLocation({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    loading: false,
+                    error: null,
+                });
+                console.log('현재 위치:', position.coords.latitude, position.coords.longitude);
+            },
+            (error) => {
+                console.error('위치 정보 가져오기 실패:', error);
+                let errorMessage = '';
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage = '위치 접근이 거부되었습니다.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage = '위치 정보를 사용할 수 없습니다.';
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage = '위치 정보 요청이 시간 초과되었습니다.';
+                        break;
+                    default:
+                        errorMessage = '위치 정보를 가져오는 중 오류가 발생했습니다.';
+                        break;
+                }
+                setCurrentLocation((prev) => ({
+                    ...prev,
+                    loading: false,
+                    error: errorMessage,
+                }));
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 60000,
+            }
+        );
+    };
 
     // 인기 게시물 로드 함수
     const loadPopularPosts = async () => {
@@ -78,7 +137,7 @@ function MainPage() {
         <div className="main-page">
             {/* Header with Navigation */}
             <header className="header">
-                <h1 className="title">Seoul AI 상황실</h1>
+                <h1 className="title">동대문을 열어라.</h1>
             </header>
 
             {/* Main Dashboard Content */}
@@ -90,12 +149,31 @@ function MainPage() {
                         <div className="section-header" onClick={handleLivemapClick} style={{ cursor: 'pointer' }}>
                             <h2>실시간 지도</h2>
                             <div className="section-controls">
-                                <button className="control-btn">🔄</button>
+                                <div className="location-status">
+                                    {currentLocation.loading ? (
+                                        <span className="location-loading">📍 위치 찾는 중...</span>
+                                    ) : currentLocation.error ? (
+                                        <span className="location-error" title={currentLocation.error}>
+                                            📍 위치 오류
+                                        </span>
+                                    ) : (
+                                        <span className="location-success">📍 현재 위치</span>
+                                    )}
+                                </div>
+                                <button
+                                    className="control-btn"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        getCurrentLocation();
+                                    }}
+                                >
+                                    🔄
+                                </button>
                                 <button className="control-btn">⚙️</button>
                             </div>
                         </div>
                         <div className="map-container">
-                            <Tmap popularPosts={popularPosts} />
+                            <Tmap popularPosts={popularPosts} currentLocation={currentLocation} />
                         </div>
                     </section>
 
