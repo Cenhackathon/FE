@@ -34,7 +34,7 @@ export default function WeatherPage() {
       <div className="main-content">
         <div className="map-view-section">
           <MapView />
-          </div>
+        </div>
       
         <div className="side-panel">
           <div className="top-card">

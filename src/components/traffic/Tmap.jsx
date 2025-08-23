@@ -1,18 +1,19 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const Tmap = ({ popularPosts = [], currentLocation = null }) => {
+const Tmap = ({ popularPosts = [], currentLocation = null, alerts = [] }) => {
     const navigate = useNavigate();
     const mapRef = useRef(null);
     const initialized = useRef(false);
     const polylineRef = useRef([]);
     const markersRef = useRef([]);
     const currentLocationMarkerRef = useRef(null);
+    const alertMarkersRef = useRef([]);
     const [trafficVisible, setTrafficVisible] = useState(true);
     const [autoUpdate, setAutoUpdate] = useState(true);
 
     // Polyline 생성/갱신 함수
-    const fetchTraffic = async () => {
+    const fetchTraffic = useCallback(async () => {
         if (!mapRef.current) return;
 
         try {
@@ -65,7 +66,29 @@ const Tmap = ({ popularPosts = [], currentLocation = null }) => {
         } catch (e) {
             console.error('교통 API 오류:', e);
         }
-    };
+    }, [mapRef, trafficVisible]);
+
+    // 알림에 따라 마커 추가
+    const addAlertMarkers = useCallback(() => {
+        if(!mapRef.current || !window.Tmapv2) return;
+
+        // 기존 알림 마커 제거
+        alertMarkersRef.current.forEach(marker => marker.setMap(null));
+        alertMarkersRef.current = [];
+
+        // 알림에 따라 마커 추가
+        alerts.forEach(alert => {
+            if(alert.coordinates && alert.coordinates.length === 2){
+                const [lon, lat] = alert.coordinates;
+                const marker = new window.Tmapv2.Marker({
+                    position: new window.Tmapv2.LatLng(lat, lon),
+                    map: mapRef.current,
+                    title: alert.message || alert.name,
+                });
+                alertMarkersRef.current.push(marker);
+            }
+        });
+    }, [alerts]);
 
     // 인기게시물 마커 생성/갱신 함수
     const updatePopularPostMarkers = () => {
@@ -244,13 +267,14 @@ const Tmap = ({ popularPosts = [], currentLocation = null }) => {
             fetchTraffic();
             updatePopularPostMarkers();
             updateCurrentLocationMarker();
+            addAlertMarkers();
         }, 100);
 
         let interval;
         if (autoUpdate) interval = setInterval(fetchTraffic, 180000);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [autoUpdate, fetchTraffic]);
 
     // currentLocation이 변경될 때마다 현재 위치 마커 업데이트
     useEffect(() => {
@@ -263,6 +287,13 @@ const Tmap = ({ popularPosts = [], currentLocation = null }) => {
     useEffect(() => {
         updatePopularPostMarkers();
     }, [popularPosts]);
+
+    // alerts가 변경될 때마다 알림 마커 업데이트
+    useEffect(() => {
+        if (mapRef.current) {
+            addAlertMarkers();
+        }
+    }, [addAlertMarkers]);
 
     // 게시물 상세페이지 이동 이벤트 리스너
     useEffect(() => {
@@ -281,7 +312,7 @@ const Tmap = ({ popularPosts = [], currentLocation = null }) => {
     // trafficVisible 변경 시 새로 Polyline 그리기
     useEffect(() => {
         fetchTraffic();
-    }, [trafficVisible]);
+    }, [fetchTraffic]);
 
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative' }}>
