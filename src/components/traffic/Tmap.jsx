@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import redmarker from '../../assets/marker-red.png';
+import yellowmarker from '../../assets/marker-yellow.png';
 
 const Tmap = ({ alerts }) => {
     const mapRef = useRef(null);
@@ -15,7 +17,6 @@ const Tmap = ({ alerts }) => {
         try {
             const TMAP_APP_KEY = process.env.REACT_APP_TMAP_API_KEY;
 
-            // URLSearchParams를 사용해 쿼리 파라미터 구성
             const url = new URL('https://apis.openapi.sk.com/tmap/traffic');
             url.searchParams.append('version', '1');
             url.searchParams.append('reqCoordType', 'WGS84GEO');
@@ -45,7 +46,7 @@ const Tmap = ({ alerts }) => {
                 path.forEach((p) => bounds.extend(p));
 
                 const congestion = feature.properties.congestion || 0;
-                let lineColor = '#61AB25'; // 원활
+                let lineColor = '#61AB25';
                 if (congestion === 2) lineColor = '#FFFF00';
                 else if (congestion === 3) lineColor = '#E87506';
                 else if (congestion === 4) lineColor = '#D61125';
@@ -73,18 +74,28 @@ const Tmap = ({ alerts }) => {
         markerRef.current = [];
 
         // 알림에 따라 마커 추가
-        alerts.forEach(alert => {
-            if(alert.coordinates && alert.coordinates.length === 2){
-                const [lon, lat] = alert.coordinates;
+        (alerts || []).forEach(alert => {
+            if(alert.coordinate && alert.coordinate.length === 2){
+                const [lon, lat] = alert.coordinate;
+                const iconurl = alert.isAccidentNode === 'Y' && (alert.accidentUpperCode === 'A' || alert.accidentUpperCode === 'D') ? redmarker : yellowmarker;
+
                 const marker = new window.Tmapv2.Marker({
                     position: new window.Tmapv2.LatLng(lat, lon),
                     map: mapRef.current,
-                    title: alert.name,
+                    icon: iconurl,
+                    // title: alert.name.split('/')[0],
+                    title: alert.description.split('/')[0],
                 });
                 markerRef.current.push(marker);
             }
         });
     }, [mapRef, alerts]);
+
+    useEffect(() => {
+        if(mapRef.current){
+            addAlertMarkers();
+        }
+    }, [alerts, addAlertMarkers]);
 
     // 지도 초기화
     useEffect(() => {

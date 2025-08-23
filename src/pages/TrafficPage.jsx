@@ -80,19 +80,15 @@ const TrafficPage = () => {
             setPosts(topPosts);
 
             // 실시간 알림 백엔드 호출
-            const response = await fetch('http://127.0.0.1:8000/');
+            const response = await fetch('https://openddm.store/traffic/traffic_current_info/');
             const data = await response.json();
-            const newAlerts = data.posts
+            const newAlerts = data
                 .filter(post => post.isAccidentNode === 'Y')
-                .map(post => ({
-                    type: 'Y',
-                    message: post.description,
-                    traffictype: post.accidentUppercode,
-                    coordinates: post.coordinates,
-                }));
+                .slice(-30)
+                .reverse();
             setAlerts(newAlerts);
 
-            setPrediction(data.prediction || []);
+            // setPrediction(data.prediction || []);
 
         } catch (error) {
             console.log('에러: ', error);
@@ -103,6 +99,8 @@ const TrafficPage = () => {
 
     useEffect(() => {
         getPosts();
+        const interval = setInterval(getPosts, 300000);
+        return () => clearInterval(interval)
     }, [getPosts]);
 
     return (
@@ -138,21 +136,27 @@ const TrafficPage = () => {
                     ))}
                 </ul>
 
-                <h3>예측 데이터</h3>
+                {/* <h3>예측 데이터</h3>
                 <ul className="legend-list">
                     <p className="prediction-text">
                         도로 혼잡 예상 구간: {prediction.join(', ')}
                     </p>
-                </ul>
+                </ul> */}
 
                 <h3>실시간 알림</h3>
                 <ul className="legend-list">
-                    {alerts.map((alert, index) => (
-                        <div key={index} className={alert.type === 'Y' && (alert.traffictype === 'A' || alert.traffictype === 'D') ? 'alert-box-red' : 'alert-box-yellow'}>
-                            {alert.type === 'Y' && (alert.traffictype === 'A' || alert.traffictype === 'D') ? '🚨 ' : '🚧 '}
-                            {alert.message}
+                    {alerts.length > 0 ? (
+                        alerts.map((alert, index) => (
+                            <div key={index} className={alert.isAccidentNode === 'Y' && (alert.accidentUpperCode === 'A' || alert.accidentUpperCode === 'D') ? 'alert-box-red' : 'alert-box-yellow'}>
+                                {alert.isAccidentNode === 'Y' && (alert.accidentUpperCode === 'A' || alert.accidentUpperCode === 'D') ? '🚨 ' : '🚧 '}
+                                {alert.description.split('/')[0]}
+                            </div>
+                        ))
+                    ) : (
+                        <div className = "no-alerts-message">
+                            실시간 알림이 없습니다.
                         </div>
-                    ))}
+                    )}
                 </ul>
             </div>
         </div>
