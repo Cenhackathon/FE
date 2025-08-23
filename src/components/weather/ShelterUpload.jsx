@@ -6,7 +6,7 @@ const ShelterUpload = () => {
     const [message, setMessage] = useState('');
     const [inUploading, setIsUploading] = useState(false);
 
-    const API_BASE_URL = 'http://127.0.0.1:8000';
+    const API_BASE_URL = 'https://openddm.store';
 
     const handleFileChange = (e) => {
         setfile(e.target.files[0]);
@@ -40,7 +40,7 @@ const ShelterUpload = () => {
             setIsUploading(false);
         }
     };
-    
+
     return (
         <div>
             <h2>📥 CSV 업로드</h2>
@@ -50,7 +50,7 @@ const ShelterUpload = () => {
             </button>
             {message && <p style={{ marginTop: '10px', color: isUploading ? 'gray' : 'green' }}>{message}</p>}
         </div>
-    )
+    );
 };
 
 export default ShelterUpload;

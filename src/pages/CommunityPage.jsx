@@ -58,11 +58,16 @@ function CommunityPage() {
         setLoading(true);
         setError(null);
         try {
-            const baseUrl = 'http://127.0.0.1:8000';
+            const baseUrl = 'https://openddm.store';
             const orderBy = sortBy === 'latest' ? 'created_at' : 'likes'; // API 명세에 맞는 정렬 파라미터
             const categoryParam = activeCategory === '전체' ? '' : `/${getCategoryAPIValue(activeCategory)}`;
 
-            const response = await fetch(`${baseUrl}/community/list/${orderBy}${categoryParam}/`);
+            const response = await fetch(`${baseUrl}/community/list/${orderBy}${categoryParam}/`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(currentUser?.token && { Authorization: `Token ${currentUser.token}` }),
+                },
+            });
 
             if (response.ok) {
                 const data = await response.json();
@@ -139,21 +144,9 @@ function CommunityPage() {
         }
 
         try {
-            const baseUrl = 'http://127.0.0.1:8000';
-            const response = await fetch(`${baseUrl}/community/${postId}/likes`, {
-                method: 'POST',
-                headers: {
-                    Authorization: `Token ${currentUser?.token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (response.ok) {
-                // 좋아요 처리 후 게시물 목록 새로고침
-                await loadPosts();
-            } else {
-                throw new Error('좋아요 처리 실패');
-            }
+            await communityService.toggleLike(postId, currentUser?.token);
+            // 좋아요 처리 후 게시물 목록 새로고침
+            await loadPosts();
         } catch (error) {
             console.error('좋아요 처리 실패:', error);
             alert('좋아요 처리에 실패했습니다.');
@@ -174,6 +167,11 @@ function CommunityPage() {
     };
     const handleBack = () => {
         navigate('/');
+    };
+
+    // 게시물 상세페이지로 이동
+    const handlePostClick = (postId) => {
+        navigate(`/community/${postId}`);
     };
 
     // 인증 관련 핸들러
@@ -275,7 +273,7 @@ function CommunityPage() {
 
         try {
             // TODO: 백엔드 배포시 실제 API URL로 교체
-            const baseUrl = 'http://127.0.0.1:8000';
+            const baseUrl = 'https://openddm.store';
 
             // API 명세서에 따른 카테고리 매핑
             const categoryMap = {
@@ -633,7 +631,11 @@ function CommunityPage() {
                             </div>
                         ) : (
                             getSortedAndFilteredPosts().map((post) => (
-                                <div key={post.id} className="post-card">
+                                <div
+                                    key={post.id}
+                                    className="post-card clickable"
+                                    onClick={() => handlePostClick(post.id)}
+                                >
                                     <div className="post-header">
                                         <span className={`category-tag ${post.category}`}>{post.category}</span>
                                         <span className="post-time">{post.time}</span>
@@ -662,11 +664,21 @@ function CommunityPage() {
                                             <span className="author-name">{post.author}</span>
                                         </div>
                                         <div className="post-actions">
-                                            <button className="action-btn" onClick={() => handleLikeToggle(post.id)}>
+                                            <button
+                                                className="action-btn"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleLikeToggle(post.id);
+                                                }}
+                                            >
                                                 👍 {post.likes || 0}
                                             </button>
-                                            <button className="action-btn">💬 {post.comments || 0}</button>
-                                            <button className="action-btn">📤 공유</button>
+                                            <button className="action-btn" onClick={(e) => e.stopPropagation()}>
+                                                💬 {post.comments || 0}
+                                            </button>
+                                            <button className="action-btn" onClick={(e) => e.stopPropagation()}>
+                                                📤 공유
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
