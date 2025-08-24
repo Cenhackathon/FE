@@ -18,16 +18,10 @@ export default function WeatherPage() {
 
   return (
     <div className="weatherpage">
-    <header className="header">
+    <header className="weather-header">
                 <div className="header-left">
-                    <h1 className="title">Seoul AI 상황실</h1>
+                    <h1 className="title">Seoul AI Weather</h1>
                 </div>
-                <nav className="nav-bar">
-                    <button className="nav-btn">Dashboard</button>
-                    <button className="nav-btn">Analytics</button>
-                    <button className="nav-btn">Reports</button>
-                    <button className="nav-btn">Settings</button>
-                </nav>
     </header>
 
     <div className="weather-page-container">
