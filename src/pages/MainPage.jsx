@@ -192,7 +192,7 @@ function MainPage() {
         <div className="main-page">
             {/* Header with Navigation */}
             <header className="header">
-                <h1 className="title">Seoul AI 상황실</h1>
+                <h1 className="title">동대문을 열어라!</h1>
                 <div className="auth-section">
                     {isAuthenticated ? (
                         <div className="user-info">
@@ -222,10 +222,6 @@ function MainPage() {
                     <section className="map-section">
                         <div className="section-header" onClick={handleLivemapClick} style={{ cursor: 'pointer' }}>
                             <h2>실시간 지도</h2>
-                            <div className="section-controls">
-                                <button className="control-btn">🔄</button>
-                                <button className="control-btn">⚙️</button>
-                            </div>
                         </div>
                         <div className="map-container">
                             <Tmap mapId="mainmapDiv" popularPosts={popularPosts} />
@@ -243,9 +239,6 @@ function MainPage() {
                         >
                             <div className="panel-header">
                                 <h3>Chatbot</h3>
-                                <div className="panel-controls">
-                                    <button className="control-btn">💬</button>
-                                </div>
                             </div>
                             <div className="panel-content">
                                 <div className="chatbot-preview">
@@ -269,9 +262,6 @@ function MainPage() {
                         >
                             <div className="panel-header">
                                 <h3>Community</h3>
-                                <div className="panel-controls">
-                                    <button className="control-btn">👥</button>
-                                </div>
                             </div>
                             <div className="panel-content">
                                 <div className="community-preview">
