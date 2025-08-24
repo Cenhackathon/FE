@@ -92,15 +92,30 @@ export const communityService = {
     // 댓글 작성
     createComment: async (postId, content, token) => {
         try {
+            const requestBody = {
+                content: content,
+            };
+
+            console.log('📤 댓글 작성 요청 상세:', {
+                url: `${API_BASE_URL}/community/${postId}/comments/`,
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Token ${token.substring(0, 10)}...`,
+                },
+                body: requestBody,
+                stringifiedBody: JSON.stringify(requestBody),
+            });
+
+            console.log('🔍 실제 전송될 body:', JSON.stringify(requestBody));
+
             const response = await fetch(`${API_BASE_URL}/community/${postId}/comments/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Token ${token}`,
                 },
-                body: JSON.stringify({
-                    content: content,
-                }),
+                body: JSON.stringify(requestBody),
             });
 
             if (!response.ok) {
