@@ -1,13 +1,62 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import '../styles/Livemap.css';
 import Tmap from '../components/traffic/Tmap';
+import { communityService } from '../services/communityService';
 
 const Livemap = () => {
     const navigate = useNavigate();
     const [posts, setPosts] = useState([]); // 교통혼잡도 top3
     const [prediction, setPrediction] = useState([]); // 예측 데이터
     const [alerts, setAlerts] = useState([]); // 실시간 알림
+    const [popularPosts, setPopularPosts] = useState([]); // 인기게시물
+    const [currentLocation, setCurrentLocation] = useState({
+        latitude: null,
+        longitude: null,
+        loading: true,
+        error: null,
+    });
+
+    // 현재 위치 가져오기 함수
+    const getCurrentLocation = useCallback(() => {
+        setCurrentLocation((prev) => ({ ...prev, loading: true, error: null }));
+
+        if (!navigator.geolocation) {
+            setCurrentLocation({
+                latitude: null,
+                longitude: null,
+                loading: false,
+                error: 'Geolocation is not supported by this browser.',
+            });
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setCurrentLocation({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    loading: false,
+                    error: null,
+                });
+            },
+            (error) => {
+                console.error('Geolocation error:', error);
+                setCurrentLocation({
+                    latitude: null,
+                    longitude: null,
+                    loading: false,
+                    error: error.message,
+                });
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 300000, // 5분
+            }
+        );
+    }, []);
 
     // 좌표를 행정동으로 변환, 실패 시 기본값 사용
     const getAddressName = useCallback(async (lon, lat) => {
@@ -17,12 +66,12 @@ const Livemap = () => {
         try {
             const res = await fetch(url, {
                 method: 'GET',
-                headers: { 'appKey': TMAP_APP_KEY }
+                headers: { appKey: TMAP_APP_KEY },
             });
             const data = await res.json();
             return data.addressInfo?.legalDong || data.addressInfo?.roadName || '알 수 없는 지역';
         } catch (err) {
-            console.error("주소 변환 에러:", err);
+            console.error('주소 변환 에러:', err);
             return '알 수 없는 지역';
         }
     }, []);
@@ -33,7 +82,7 @@ const Livemap = () => {
             const tmapUrl = `https://apis.openapi.sk.com/tmap/traffic?version=1&reqCoordType=WGS84GEO&resCoordType=WGS84GEO&trafficType=AUTO&centerLon=127.0595&centerLat=37.5979&zoomLevel=15`;
             const tmapResponse = await fetch(tmapUrl, {
                 method: 'GET',
-                headers: { 'appKey': TMAP_APP_KEY }
+                headers: { appKey: TMAP_APP_KEY },
             });
 
             if (!tmapResponse.ok) throw new Error(`HTTP error! status: ${tmapResponse.status}`);
@@ -46,9 +95,8 @@ const Livemap = () => {
 
             // 반복하며 중복 도로 제거, top3 확보
             for (const feature of features
-                .filter(f => f.geometry.type === 'LineString' && f.properties.congestion)
+                .filter((f) => f.geometry.type === 'LineString' && f.properties.congestion)
                 .sort((a, b) => b.properties.congestion - a.properties.congestion)) {
-
                 if (topPosts.length >= 3) break;
 
                 const props = feature.properties;
@@ -64,46 +112,111 @@ const Livemap = () => {
 
                 const areaName = await getAddressName(lon, lat);
 
-                const congestionLevel = {
-                    1: '원활',
-                    2: '서행',
-                    3: '지체',
-                    4: '정체'
-                }[props.congestion] || '정보 없음';
+                const congestionLevel =
+                    {
+                        1: '원활',
+                        2: '서행',
+                        3: '지체',
+                        4: '정체',
+                    }[props.congestion] || '정보 없음';
 
                 topPosts.push({
-                    name: `${roadName} (${areaName}) - ${congestionLevel}`
+                    name: `${roadName} (${areaName}) - ${congestionLevel}`,
                 });
-                usedRoads.add(roadName); 
+                usedRoads.add(roadName);
             }
 
             setPosts(topPosts);
 
-            // 실시간 알림 백엔드 호출
-            const response = await fetch('http://127.0.0.1:8000/');
-            const data = await response.json();
-            const newAlerts = data.posts
-                .filter(post => post.isAccidentNode === 'Y')
-                .map(post => ({
-                    type: 'Y',
-                    message: post.description,
-                    traffictype: post.accidentUppercode,
-                    coordinates: post.coordinates,
-                }));
-            setAlerts(newAlerts);
-
-            setPrediction(data.prediction || []);
-
+            // 실시간 알림 백엔드 호출 (오류 처리 개선)
+            try {
+                const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://127.0.0.1:8000';
+                const response = await axios.get(`${API_BASE_URL}/`, {
+                    timeout: 5000, // 5초 타임아웃
+                });
+                const data = response.data;
+                const newAlerts =
+                    data.posts
+                        ?.filter((post) => post.isAccidentNode === 'Y')
+                        .map((post) => ({
+                            type: 'Y',
+                            message: post.description,
+                            traffictype: post.accidentUppercode,
+                            coordinates: post.coordinates,
+                        })) || [];
+                setAlerts(newAlerts);
+                setPrediction(data.prediction || []);
+            } catch (backendError) {
+                console.warn('백엔드 서버에 연결할 수 없습니다:', backendError.message);
+                // 백엔드 오류시 기본값 설정
+                setAlerts([]);
+                setPrediction(['백엔드 서버와 연결할 수 없습니다']);
+            }
         } catch (error) {
-            console.log('에러: ', error);
+            console.error('전체 데이터 로드 에러:', error);
+            // T맵 API 오류시 기본값 설정
+            setPosts([
+                { name: '1. 데이터를 불러올 수 없습니다' },
+                { name: '2. API 키를 확인해주세요' },
+                { name: '3. 네트워크 연결을 확인해주세요' },
+            ]);
+            setAlerts([]);
+            setPrediction(['데이터 로드 실패']);
         }
-    }, [getAddressName, setPosts, setAlerts, setPrediction]);
+    }, [getAddressName]);
+
+    // 인기게시물 로드 함수
+    const loadPopularPosts = useCallback(async () => {
+        try {
+            const data = await communityService.getPopularPosts();
+            // API 응답 데이터를 UI 형태로 변환
+            const transformedPosts = data.map((post) => ({
+                id: post.post_id,
+                title: post.title,
+                content: post.content,
+                author: post.author,
+                time: formatTime(post.created_at),
+                likes: post.likes,
+                comments: post.comments?.length || 0,
+                category: getCategoryUIValue(post.category),
+                latitude: post.latitude,
+                longitude: post.longitude,
+                location: post.location,
+            }));
+            setPopularPosts(transformedPosts);
+        } catch (error) {
+            console.error('인기 게시물 로드 실패:', error);
+            // 실패시 빈 배열로 설정
+            setPopularPosts([]);
+        }
+    }, []);
+
+    // 시간 포맷팅 함수
+    const formatTime = (dateString) => {
+        const now = new Date();
+        const postTime = new Date(dateString);
+        const diffMs = now - postTime;
+        const diffMins = Math.floor(diffMs / 60000);
+
+        if (diffMins < 1) return '방금 전';
+        if (diffMins < 60) return `${diffMins}분 전`;
+        if (diffMins < 1440) return `${Math.floor(diffMins / 60)}시간 전`;
+        return `${Math.floor(diffMins / 1440)}일 전`;
+    };
+
+    // 카테고리 API값을 UI값으로 변환
+    const getCategoryUIValue = (apiCategory) => {
+        const map = { general: '교통', emergency: '민원', notice: '지역정보' };
+        return map[apiCategory] || '교통';
+    };
 
     const handleBack = () => navigate('/');
 
     useEffect(() => {
+        getCurrentLocation(); // 현재 위치 가져오기
         getPosts();
-    }, [getPosts]);
+        loadPopularPosts(); // 인기게시물 로드 추가
+    }, [getCurrentLocation, getPosts, loadPopularPosts]);
 
     return (
         <div className="traffic-page-container">
@@ -117,34 +230,90 @@ const Livemap = () => {
             </header>
 
             <div className="map-placeholder">
-                <Tmap alerts={alerts} />
+                <Tmap
+                    mapId="livemapDiv"
+                    popularPosts={popularPosts}
+                    alerts={alerts}
+                    currentLocation={currentLocation}
+                    onRefreshLocation={getCurrentLocation}
+                />
             </div>
 
             <div className="sidebar">
+                <h3>📍 현재 위치</h3>
+                <div className="location-info">
+                    {currentLocation.loading ? (
+                        <p className="location-status loading">위치 정보를 가져오는 중...</p>
+                    ) : currentLocation.error ? (
+                        <div className="location-status error">
+                            <p>❌ 위치 정보를 가져올 수 없습니다</p>
+                            <p className="error-detail">{currentLocation.error}</p>
+                            <button className="refresh-location-btn" onClick={getCurrentLocation}>
+                                🔄 다시 시도
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="location-status success">
+                            <p>✅ 현재 위치 확인됨</p>
+                            <p className="coordinates">
+                                위도: {currentLocation.latitude?.toFixed(6)}
+                                <br />
+                                경도: {currentLocation.longitude?.toFixed(6)}
+                            </p>
+                        </div>
+                    )}
+                </div>
+
                 <h3>교통 혼잡도 TOP3</h3>
                 <ul className="legend-list">
                     {posts.map((post, index) => (
-                        <li key={index}>
-                            {`${index + 1}. ${post.name}`}
-                        </li>
+                        <li key={index}>{`${index + 1}. ${post.name}`}</li>
                     ))}
                 </ul>
 
                 <h3>예측 데이터</h3>
                 <ul className="legend-list">
-                    <p className="prediction-text">
-                        도로 혼잡 예상 구간: {prediction.join(', ')}
-                    </p>
+                    <p className="prediction-text">도로 혼잡 예상 구간: {prediction.join(', ')}</p>
                 </ul>
 
                 <h3>실시간 알림</h3>
                 <ul className="legend-list">
                     {alerts.map((alert, index) => (
-                        <div key={index} className={alert.type === 'Y' && (alert.traffictype === 'A' || alert.traffictype === 'D') ? 'alert-box-red' : 'alert-box-yellow'}>
-                            {alert.type === 'Y' && (alert.traffictype === 'A' || alert.traffictype === 'D') ? '🚨 ' : '🚧 '}
+                        <div
+                            key={index}
+                            className={
+                                alert.type === 'Y' && (alert.traffictype === 'A' || alert.traffictype === 'D')
+                                    ? 'alert-box-red'
+                                    : 'alert-box-yellow'
+                            }
+                        >
+                            {alert.type === 'Y' && (alert.traffictype === 'A' || alert.traffictype === 'D')
+                                ? '🚨 '
+                                : '🚧 '}
                             {alert.message}
                         </div>
                     ))}
+                </ul>
+
+                <h3>🔥 인기 게시물 ({popularPosts.length})</h3>
+                <ul className="legend-list popular-posts-list">
+                    {popularPosts.length > 0 ? (
+                        popularPosts.map((post, index) => (
+                            <li key={post.id} className="popular-post-item">
+                                <div className="post-rank">#{index + 1}</div>
+                                <div className="post-info">
+                                    <div className="post-title-small">{post.title}</div>
+                                    <div className="post-meta">
+                                        <span className="post-category">{post.category}</span>
+                                        <span className="post-likes">👍 {post.likes}</span>
+                                    </div>
+                                    <div className="post-location">📍 {post.location}</div>
+                                </div>
+                            </li>
+                        ))
+                    ) : (
+                        <li className="no-popular-posts-msg">인기 게시물이 없습니다</li>
+                    )}
                 </ul>
             </div>
         </div>

@@ -1,40 +1,57 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import chatbotService from '../services/chatbotService';
+import { searchPlacesWithTmap } from '../utils/tmapPlaces';
 
 function ChatbotPage() {
     const navigate = useNavigate();
     const [messages, setMessages] = useState([
         {
             id: 1,
-            text: '안녕하세요! Seoul AI 상황실 챗봇입니다. 무엇을 도와드릴까요?',
+            text: '안녕하세요! 동대문구 전문 AI 챗봇입니다. 무엇을 도와드릴까요?',
             sender: 'bot',
             time: new Date().toLocaleTimeString(),
         },
     ]);
     const [inputMessage, setInputMessage] = useState('');
+    const [location, setLocation] = useState(null);
+    const [loading, setLoading] = useState(false);
 
-    const handleSendMessage = () => {
-        if (inputMessage.trim()) {
-            const newMessage = {
-                id: Date.now(),
-                text: inputMessage,
-                sender: 'user',
+    useEffect(() => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => setLocation({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+                () => {}
+            );
+        }
+    }, []);
+
+    const handleSendMessage = async () => {
+        if (!inputMessage.trim() || loading) return;
+        const userMsg = { id: Date.now(), text: inputMessage, sender: 'user', time: new Date().toLocaleTimeString() };
+        setMessages((prev) => [...prev, userMsg]);
+        setInputMessage('');
+
+        setLoading(true);
+        try {
+            const keyword = chatbotService.detectKeywords(inputMessage);
+            let places = [];
+            if (keyword) {
+                places = await searchPlacesWithTmap(`동대문구 ${keyword}`, location);
+            }
+            const reply = await chatbotService.generateResponse(inputMessage, location, places);
+            const botMsg = { id: Date.now() + 1, text: reply, sender: 'bot', time: new Date().toLocaleTimeString() };
+            setMessages((prev) => [...prev, botMsg]);
+        } catch (e) {
+            const errMsg = {
+                id: Date.now() + 1,
+                text: `오류: ${e.message}`,
+                sender: 'bot',
                 time: new Date().toLocaleTimeString(),
             };
-            setMessages([...messages, newMessage]);
-            setInputMessage('');
-
-            // 봇 응답 시뮬레이션
-            setTimeout(() => {
-                const botResponse = {
-                    id: Date.now() + 1,
-                    text: '메시지를 받았습니다. 곧 답변드리겠습니다.',
-                    sender: 'bot',
-                    time: new Date().toLocaleTimeString(),
-                };
-                setMessages((prev) => [...prev, botResponse]);
-            }, 1000);
+            setMessages((prev) => [...prev, errMsg]);
         }
+        setLoading(false);
     };
 
     const handleKeyPress = (e) => {
@@ -127,7 +144,7 @@ function ChatbotPage() {
                                     boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
                                 }}
                             >
-                                <p style={{ margin: 0 }}>{message.text}</p>
+                                <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{message.text}</p>
                                 <small
                                     style={{
                                         opacity: 0.7,
@@ -140,6 +157,7 @@ function ChatbotPage() {
                             </div>
                         </div>
                     ))}
+                    {loading && <div style={{ opacity: 0.6, fontSize: '0.9em' }}>답변 생성 중...</div>}
                 </div>
 
                 {/* Input Area */}
