@@ -231,6 +231,7 @@ const Livemap = () => {
 
             <div className="map-placeholder">
                 <Tmap
+                    mapId="livemapDiv"
                     popularPosts={popularPosts}
                     alerts={alerts}
                     currentLocation={currentLocation}

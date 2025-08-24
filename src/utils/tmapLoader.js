@@ -24,8 +24,12 @@ export const loadTmapScript = () => {
 
         const TMAP_APP_KEY = process.env.REACT_APP_TMAP_API_KEY;
 
+        console.log('T맵 API 키 확인:', TMAP_APP_KEY ? '설정됨' : '설정되지 않음');
+        
         if (!TMAP_APP_KEY || TMAP_APP_KEY === 'your_tmap_api_key_here') {
-            reject(new Error('T맵 API 키가 설정되지 않았습니다.'));
+            const errorMsg = 'T맵 API 키가 설정되지 않았습니다. .env 파일에 REACT_APP_TMAP_API_KEY를 설정해주세요.';
+            console.error(errorMsg);
+            reject(new Error(errorMsg));
             return;
         }
 
@@ -33,8 +37,11 @@ export const loadTmapScript = () => {
         const script = document.createElement('script');
         script.src = `https://apis.openapi.sk.com/tmap/jsv2?version=1&appKey=${TMAP_APP_KEY}`;
         script.async = true;
+        
+        console.log('T맵 스크립트 로드 시작:', script.src);
 
         script.onload = () => {
+            console.log('T맵 스크립트 onload 이벤트 발생');
             // 스크립트 로드 후 Tmapv2가 실제로 사용 가능할 때까지 기다림
             const waitForTmapv2 = () => {
                 if (window.Tmapv2 && typeof window.Tmapv2.Map === 'function') {
@@ -48,7 +55,8 @@ export const loadTmapScript = () => {
             waitForTmapv2();
         };
 
-        script.onerror = () => {
+        script.onerror = (error) => {
+            console.error('T맵 스크립트 로드 실패:', error);
             reject(new Error('T맵 스크립트 로드 실패'));
         };
 

@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loadTmapScript } from '../../utils/tmapLoader';
 import redmarker from '../../assets/marker-red.png';
 import yellowmarker from '../../assets/marker-yellow.png';
 
@@ -9,6 +8,7 @@ const Tmap = ({
     currentLocation = { latitude: null, longitude: null, loading: true, error: null },
     alerts = [],
     onRefreshLocation,
+    mapId = 'mapDiv', // 고유한 맵 ID를 prop으로 받기
 }) => {
     const navigate = useNavigate();
     const mapRef = useRef(null);
@@ -312,24 +312,35 @@ const Tmap = ({
 
     // 지도 초기화
     useEffect(() => {
-        const initializeMap = async () => {
-            if (initialized.current) return;
+        const initializeMap = () => {
+            if (initialized.current) {
+                console.log('지도가 이미 초기화됨, 중복 초기화 방지');
+                return;
+            }
+
+            // T맵 라이브러리가 로드될 때까지 기다림
+            if (!window.Tmapv2) {
+                console.log('T맵 라이브러리 대기 중...');
+                setTimeout(initializeMap, 100);
+                return;
+            }
 
             try {
-                console.log('T맵 스크립트 로드 시작...');
-
-                // .env에서 API 키를 가져와서 동적으로 T맵 스크립트 로드
-                const Tmapv2 = await loadTmapScript();
-
-                console.log('T맵 스크립트 로드 완료, 지도 초기화 시작');
+                console.log(`T맵 라이브러리 발견, 지도 초기화 시작... (맵 ID: ${mapId})`);
 
                 // 추가 안전 체크
-                if (!window.Tmapv2 || !window.Tmapv2.Map || !window.Tmapv2.LatLng) {
-                    throw new Error('T맵 라이브러리가 완전히 로드되지 않음');
+                if (!window.Tmapv2.Map || !window.Tmapv2.LatLng) {
+                    throw new Error('T맵 라이브러리 클래스가 완전히 로드되지 않음');
                 }
 
                 // React StrictMode 등으로 인해 재마운트될 때 이전 지도 DOM이 남아 중복 표시되는 것을 방지
-                const container = document.getElementById('mapDiv');
+                const container = document.getElementById(mapId);
+                if (!container) {
+                    throw new Error(`지도 컨테이너를 찾을 수 없습니다: ${mapId}`);
+                }
+                
+                console.log(`지도 컨테이너 발견: ${mapId}`, container);
+                
                 if (container) {
                     // 남아있는 기존 자식 노드 제거
                     while (container.firstChild) container.removeChild(container.firstChild);
@@ -338,7 +349,7 @@ const Tmap = ({
                 // 기본 중심 위치 (한국외국어대학교)
                 const initialCenter = new window.Tmapv2.LatLng(37.5979, 127.0595);
 
-                const map = new window.Tmapv2.Map('mapDiv', {
+                const map = new window.Tmapv2.Map(mapId, {
                     center: initialCenter,
                     width: '100%',
                     height: '100%',
@@ -386,7 +397,7 @@ const Tmap = ({
                     currentLocationMarkerRef.current = null;
                 }
                 // 컨테이너 비우기
-                const container = document.getElementById('mapDiv');
+                const container = document.getElementById(mapId);
                 if (container) container.innerHTML = '';
             } finally {
                 mapRef.current = null;
@@ -455,7 +466,7 @@ const Tmap = ({
 
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-            <div id="mapDiv" style={{ width: '100%', height: '100%' }} />
+            <div id={mapId} style={{ width: '100%', height: '100%' }} />
             <div className="top-right-buttons">
                 <button className="top-right-button" onClick={() => setTrafficVisible((prev) => !prev)}>
                     {trafficVisible ? '교통 OFF' : '교통 ON'}

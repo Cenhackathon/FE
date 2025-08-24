@@ -95,7 +95,7 @@ function MainPage() {
                             </div>
                         </div>
                         <div className="map-container">
-                            <Tmap popularPosts={popularPosts} />
+                            <Tmap mapId="mainmapDiv" popularPosts={popularPosts} />
                         </div>
                     </section>
 
