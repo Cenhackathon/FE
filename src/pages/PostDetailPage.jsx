@@ -13,17 +13,40 @@ function PostDetailPage() {
     const [commentLoading, setCommentLoading] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    // 인증 관련 상태
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [currentUser, setCurrentUser] = useState(null);
-
-    useEffect(() => {
-        // 로그인 상태 확인
+    // 인증 관련 상태 - localStorage에서 초기값 설정
+    const [isAuthenticated, setIsAuthenticated] = useState(() => {
         const token = localStorage.getItem('token');
         const username = localStorage.getItem('username');
-        if (token && username) {
+        return !!(token && username && token !== 'undefined' && token !== 'null' && token.trim() !== '');
+    });
+    const [currentUser, setCurrentUser] = useState(() => {
+        const token = localStorage.getItem('token');
+        const username = localStorage.getItem('username');
+        if (token && username && token !== 'undefined' && token !== 'null' && token.trim() !== '') {
+            return { username, token };
+        }
+        return null;
+    });
+
+    // 인증 상태 실시간 체크 헬퍼 함수
+    const checkAuthStatus = () => {
+        const token = localStorage.getItem('token');
+        const username = localStorage.getItem('username');
+        return token && username && token !== 'undefined' && token !== 'null' && token.trim() !== '';
+    };
+
+    useEffect(() => {
+        // 로그인 상태 재확인 및 동기화
+        const token = localStorage.getItem('token');
+        const username = localStorage.getItem('username');
+        const isTokenValid = token && username && token !== 'undefined' && token !== 'null' && token.trim() !== '';
+
+        if (isTokenValid) {
             setIsAuthenticated(true);
             setCurrentUser({ username, token });
+        } else {
+            setIsAuthenticated(false);
+            setCurrentUser(null);
         }
 
         loadPostDetail();
@@ -34,10 +57,20 @@ function PostDetailPage() {
         setError(null);
         try {
             const baseUrl = 'https://openddm.store';
+
+            // localStorage에서 직접 토큰 가져오기 (React 상태 동기화 지연 방지)
+            const token = localStorage.getItem('token');
+
+            console.log('🔍 PostDetail API 요청 - 토큰 체크:', {
+                hasToken: !!token,
+                tokenValue: token,
+                isTokenValid: checkAuthStatus(),
+            });
+
             const response = await fetch(`${baseUrl}/community/${postId}/`, {
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(currentUser?.token && { Authorization: `Token ${currentUser.token}` }),
+                    ...(token && token !== 'undefined' && token !== 'null' && { Authorization: `Token ${token}` }),
                 },
             });
 
@@ -92,35 +125,48 @@ function PostDetailPage() {
     };
 
     // 댓글 작성 함수
-    const handleCommentSubmit = async (e) => {
-        e.preventDefault();
+    const handleCommentSubmit = async () => {
+        console.log('💬 댓글 작성 함수 시작');
+
         if (!newComment.trim()) {
+            console.log('💬 댓글 내용 없음');
             alert('댓글 내용을 입력해주세요.');
             return;
         }
 
-        if (!isAuthenticated) {
+        const isTokenValid = checkAuthStatus();
+        console.log('💬 토큰 유효성:', isTokenValid);
+        if (!isTokenValid) {
             alert('로그인이 필요합니다.');
             return;
         }
 
+        console.log('💬 댓글 작성 시작 - 내용:', newComment.trim());
         setCommentLoading(true);
+
         try {
-            await communityService.createComment(postId, newComment.trim(), currentUser.token);
+            const token = localStorage.getItem('token');
+            console.log('💬 API 호출 시작');
+            await communityService.createComment(postId, newComment.trim(), token);
+            console.log('💬 API 호출 성공');
             setNewComment('');
             // 게시물 다시 로드하여 새 댓글 표시
             await loadPostDetail();
         } catch (error) {
-            console.error('댓글 작성 실패:', error);
+            console.error('💬 댓글 작성 실패:', error);
             alert('댓글 작성에 실패했습니다.');
         } finally {
+            console.log('💬 댓글 작성 처리 완료');
             setCommentLoading(false);
         }
     };
 
     // 게시글 삭제 함수
     const handleDeletePost = async () => {
-        if (!isAuthenticated || currentUser.username !== post.author) {
+        const isTokenValid = checkAuthStatus();
+        const username = localStorage.getItem('username');
+
+        if (!isTokenValid || username !== post.author) {
             alert('게시글을 삭제할 권한이 없습니다.');
             return;
         }
@@ -131,7 +177,8 @@ function PostDetailPage() {
 
         setIsDeleting(true);
         try {
-            await communityService.deletePost(postId, currentUser.token);
+            const token = localStorage.getItem('token');
+            await communityService.deletePost(postId, token);
             alert('게시글이 삭제되었습니다.');
             navigate('/community');
         } catch (error) {
@@ -144,7 +191,10 @@ function PostDetailPage() {
 
     // 게시글 수정 페이지로 이동
     const handleEditPost = () => {
-        if (!isAuthenticated || currentUser.username !== post.author) {
+        const isTokenValid = checkAuthStatus();
+        const username = localStorage.getItem('username');
+
+        if (!isTokenValid || username !== post.author) {
             alert('게시글을 수정할 권한이 없습니다.');
             return;
         }
@@ -153,7 +203,8 @@ function PostDetailPage() {
     };
 
     // 현재 사용자가 게시글 작성자인지 확인
-    const isAuthor = isAuthenticated && currentUser && post && currentUser.username === post.author;
+    const username = localStorage.getItem('username');
+    const isAuthor = checkAuthStatus() && post && username === post.author;
 
     if (loading) {
         return (
@@ -244,25 +295,37 @@ function PostDetailPage() {
                             <h3>댓글 ({post.comments.length})</h3>
 
                             {/* 댓글 작성 폼 */}
-                            {isAuthenticated ? (
-                                <form className="comment-form" onSubmit={handleCommentSubmit}>
+                            {checkAuthStatus() ? (
+                                <div className="comment-form">
                                     <div className="comment-input-container">
                                         <textarea
                                             value={newComment}
                                             onChange={(e) => setNewComment(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                                                    e.preventDefault();
+                                                    handleCommentSubmit();
+                                                }
+                                            }}
                                             placeholder="댓글을 작성해주세요..."
                                             rows="3"
                                             disabled={commentLoading}
                                         />
                                         <button
-                                            type="submit"
+                                            type="button"
                                             className="comment-submit-btn"
                                             disabled={commentLoading || !newComment.trim()}
+                                            onClick={(e) => {
+                                                console.log('🔴 버튼 클릭됨!');
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleCommentSubmit();
+                                            }}
                                         >
                                             {commentLoading ? '작성 중...' : '댓글 작성'}
                                         </button>
                                     </div>
-                                </form>
+                                </div>
                             ) : (
                                 <div className="comment-login-prompt">
                                     <p>댓글을 작성하려면 로그인이 필요합니다.</p>
