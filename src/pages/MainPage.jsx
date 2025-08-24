@@ -21,7 +21,7 @@ function MainPage() {
     };
 
     const handleWeatherClick = () => {
-        navigate('/weather');
+        navigate('/weather'); 
     };
 
     const [posts, setPosts] = useState([]); // 교통혼잡도 top3
