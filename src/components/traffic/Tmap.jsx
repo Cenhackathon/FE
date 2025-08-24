@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loadTmapScript } from '../../utils/tmapLoader';
+import redmarker from '../../assets/marker-red.png';
+import yellowmarker from '../../assets/marker-yellow.png';
 
 const Tmap = ({
     popularPosts = [],
@@ -95,13 +97,18 @@ const Tmap = ({
         alertMarkersRef.current = [];
 
         // 알림에 따라 마커 추가
-        alerts.forEach((alert) => {
+        (alerts || []).forEach((alert) => {
             if (alert.coordinates && alert.coordinates.length === 2) {
                 const [lon, lat] = alert.coordinates;
+                const iconurl =
+                    alert.isAccidentNode === 'Y' && (alert.accidentUpperCode === 'A' || alert.accidentUpperCode === 'D')
+                        ? redmarker
+                        : yellowmarker;
                 const marker = new window.Tmapv2.Marker({
                     position: new window.Tmapv2.LatLng(lat, lon),
                     map: mapRef.current,
-                    title: alert.message || alert.name,
+                    icon: iconurl,
+                    title: alert.description ? alert.description.split('/')[0] : alert.message || alert.name,
                 });
                 alertMarkersRef.current.push(marker);
             }
@@ -409,21 +416,21 @@ const Tmap = ({
         if (mapRef.current && window.Tmapv2) {
             updateCurrentLocationMarker();
         }
-    }, [currentLocation]);
+    }, [currentLocation, updateCurrentLocationMarker]);
 
     // popularPosts가 변경될 때마다 마커 업데이트
     useEffect(() => {
         if (mapRef.current && window.Tmapv2) {
             updatePopularPostMarkers();
         }
-    }, [popularPosts]);
+    }, [popularPosts, updatePopularPostMarkers]);
 
     // alerts가 변경될 때마다 알림 마커 업데이트
     useEffect(() => {
         if (mapRef.current && window.Tmapv2) {
             addAlertMarkers();
         }
-    }, [alerts]);
+    }, [alerts, addAlertMarkers]);
 
     // 게시물 상세페이지 이동 이벤트 리스너
     useEffect(() => {
@@ -444,7 +451,7 @@ const Tmap = ({
         if (mapRef.current && window.Tmapv2) {
             fetchTraffic();
         }
-    }, [trafficVisible]);
+    }, [trafficVisible, fetchTraffic]);
 
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative' }}>
