@@ -271,11 +271,6 @@ const Livemap = () => {
                     ))}
                 </ul>
 
-                <h3>예측 데이터</h3>
-                <ul className="legend-list">
-                    <p className="prediction-text">도로 혼잡 예상 구간: {prediction.join(', ')}</p>
-                </ul>
-
                 <h3>실시간 알림</h3>
                 <ul className="legend-list">
                     {alerts.map((alert, index) => (
