@@ -26,7 +26,7 @@ function LoginModal({ isOpen, onClose, onSwitchToRegister, onLoginSuccess }) {
             // TODO: 백엔드 배포시 실제 API URL로 교체
             const baseUrl = 'https://openddm.store';
 
-            const response = await fetch(`${baseUrl}/api/auth/login/`, {
+            const response = await fetch(`${baseUrl}/accounts/login/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -37,13 +37,32 @@ function LoginModal({ isOpen, onClose, onSwitchToRegister, onLoginSuccess }) {
             if (response.ok) {
                 const data = await response.json();
 
+                // 🔍 백엔드 응답 전체 구조 확인
+                console.log('🔍 백엔드 전체 응답:', data);
+                console.log('🔍 응답 타입:', typeof data);
+                console.log('🔍 응답 키들:', Object.keys(data));
+                console.log('🔍 data.token:', data.token);
+                console.log('🔍 data.key:', data.key);
+                console.log('🔍 data.access_token:', data.access_token);
+                console.log('🔍 data.auth_token:', data.auth_token);
+
+                // 실제 토큰 필드 찾기
+                const token = data.token || data.key || data.access_token || data.auth_token;
+                console.log('🔑 최종 토큰:', token);
+
+                if (!token) {
+                    console.error('❌ 토큰을 찾을 수 없습니다. 백엔드 응답:', data);
+                    setError('로그인은 성공했지만 토큰을 받지 못했습니다.');
+                    return;
+                }
+
                 // 토큰 저장
-                localStorage.setItem('token', data.token);
+                localStorage.setItem('token', token);
                 localStorage.setItem('username', formData.username);
 
                 // 로그인 성공 콜백
                 onLoginSuccess({
-                    token: data.token,
+                    token: token,
                     username: formData.username,
                 });
 

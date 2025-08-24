@@ -82,13 +82,13 @@ const TrafficPage = () => {
             // 실시간 알림 백엔드 호출
             const response = await fetch('https://openddm.store/traffic/traffic_current_info/');
             const data = await response.json();
-            
+
             // 두 버전의 데이터 구조를 모두 지원
             const newAlerts = data
-                .filter(post => post.isAccidentNode === 'Y')
+                .filter((post) => post.isAccidentNode === 'Y')
                 .slice(-30)
                 .reverse()
-                .map(post => ({
+                .map((post) => ({
                     ...post,
                     // 기존 구조와 호환성 유지
                     type: 'Y',
@@ -161,26 +161,24 @@ const TrafficPage = () => {
                 <ul className="legend-list">
                     {alerts.length > 0 ? (
                         alerts.map((alert, index) => (
-                            <div 
-                                key={index} 
+                            <div
+                                key={index}
                                 className={
-                                    alert.isAccidentNode === 'Y' && 
-                                    (alert.accidentUpperCode === 'A' || alert.accidentUpperCode === 'D') 
-                                        ? 'alert-box-red' 
+                                    alert.isAccidentNode === 'Y' &&
+                                    (alert.accidentUpperCode === 'A' || alert.accidentUpperCode === 'D')
+                                        ? 'alert-box-red'
                                         : 'alert-box-yellow'
                                 }
                             >
-                                {alert.isAccidentNode === 'Y' && 
-                                 (alert.accidentUpperCode === 'A' || alert.accidentUpperCode === 'D') 
-                                    ? '🚨 ' 
+                                {alert.isAccidentNode === 'Y' &&
+                                (alert.accidentUpperCode === 'A' || alert.accidentUpperCode === 'D')
+                                    ? '🚨 '
                                     : '🚧 '}
                                 {alert.description ? alert.description.split('/')[0] : alert.message}
                             </div>
                         ))
                     ) : (
-                        <div className="no-alerts-message">
-                            실시간 알림이 없습니다.
-                        </div>
+                        <div className="no-alerts-message">실시간 알림이 없습니다.</div>
                     )}
                 </ul>
             </div>

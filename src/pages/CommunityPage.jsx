@@ -18,34 +18,163 @@ function CommunityPage() {
         category: '교통',
         location: '',
         locationType: 'current', // 'current' or 'search'
+        latitude: null,
+        longitude: null,
         image: null, // 이미지 파일
         imagePreview: null, // 이미지 미리보기 URL
     });
+
+    // 장소 검색 관련 상태
+    const [searchResults, setSearchResults] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [showSearchResults, setShowSearchResults] = useState(false);
 
     const [showPostForm, setShowPostForm] = useState(false);
     const [sortBy, setSortBy] = useState('latest'); // 'latest' or 'likes'
     const [activeCategory, setActiveCategory] = useState('전체');
 
-    // 인증 관련 상태
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [currentUser, setCurrentUser] = useState(null);
+    // 인증 관련 상태 - localStorage에서 초기값 설정
+    const [isAuthenticated, setIsAuthenticated] = useState(() => {
+        const token = localStorage.getItem('token');
+        const username = localStorage.getItem('username');
+        return !!(token && username && token !== 'undefined' && token !== 'null' && token.trim() !== '');
+    });
+    const [currentUser, setCurrentUser] = useState(() => {
+        const token = localStorage.getItem('token');
+        const username = localStorage.getItem('username');
+        if (token && username && token !== 'undefined' && token !== 'null' && token.trim() !== '') {
+            return { username, token };
+        }
+        return null;
+    });
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [showRegisterModal, setShowRegisterModal] = useState(false);
 
     // 컴포넌트 마운트시 로그인 상태 확인 및 게시물 로드
     useEffect(() => {
+        console.log('🔍 CommunityPage 마운트 - 인증 상태 확인 시작');
+
+        // localStorage에서 인증 정보 가져오기
         const token = localStorage.getItem('token');
         const username = localStorage.getItem('username');
 
-        if (token && username) {
+        console.log('💾 localStorage 정보:');
+        console.log('   - token exists:', !!token);
+        console.log('   - token value:', token);
+        console.log('   - token type:', typeof token);
+        console.log('   - token length:', token ? token.length : 0);
+        console.log('   - username:', username);
+
+        // localStorage 전체 내용 확인
+        console.log('📋 localStorage 전체 내용:');
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            const value = localStorage.getItem(key);
+            console.log(`   [${i}] ${key}: "${value}" (${typeof value}, length: ${value ? value.length : 0})`);
+        }
+
+        // 토큰 유효성 검사 (checkAuthStatus 함수 사용)
+        const isTokenValid = token && username && token !== 'undefined' && token !== 'null' && token.trim() !== '';
+
+        if (isTokenValid) {
+            console.log('✅ 유효한 토큰 발견 - 로그인 상태 복원');
             setIsAuthenticated(true);
             setCurrentUser({ username, token });
+        } else {
+            console.log('❌ 유효하지 않은 토큰 - 로그인 상태 초기화');
+            // localStorage에서 잘못된 값들만 정리 (전체 삭제 대신)
+            if (token === 'undefined' || token === 'null' || token === '') {
+                localStorage.removeItem('token');
+            }
+            if (username === 'undefined' || username === 'null' || username === '') {
+                localStorage.removeItem('username');
+            }
+            setIsAuthenticated(false);
+            setCurrentUser(null);
         }
 
         // 게시물 목록 로드
         loadPosts();
         // 인기 게시물 로드
         loadPopularPosts();
+
+        // 카카오맵 SDK 미리 로드
+        if (!window.kakao) {
+            console.log('🗺️ 카카오맵 SDK 미리 로드 시작');
+            loadKakaoSDKAndSearch();
+        }
+    }, []);
+
+    // 페이지 포커스시 로그인 상태 재확인 (다른 탭에서 로그인한 경우)
+    useEffect(() => {
+        const handlePageFocus = () => {
+            console.log('👁️ 커뮤니티페이지 포커스 - 로그인 상태 재확인');
+            const token = localStorage.getItem('token');
+            const username = localStorage.getItem('username');
+
+            console.log('   - 현재 token:', token);
+            console.log('   - 현재 username:', username);
+
+            if (token && username && token !== 'undefined' && token !== 'null') {
+                console.log('✅ 로그인 상태 발견 - 동기화');
+                setIsAuthenticated(true);
+                setCurrentUser({ username, token });
+            } else {
+                console.log('❌ 로그인 상태 없음');
+                setIsAuthenticated(false);
+                setCurrentUser(null);
+            }
+        };
+
+        // 페이지 방문시마다 체크
+        const handlePageVisibilityChange = () => {
+            if (!document.hidden) {
+                handlePageFocus();
+            }
+        };
+
+        window.addEventListener('focus', handlePageFocus);
+        document.addEventListener('visibilitychange', handlePageVisibilityChange);
+
+        return () => {
+            window.removeEventListener('focus', handlePageFocus);
+            document.removeEventListener('visibilitychange', handlePageVisibilityChange);
+        };
+    }, []);
+
+    // localStorage 변화 감지 (다른 탭에서 로그인/로그아웃시)
+    useEffect(() => {
+        const handleStorageChange = (e) => {
+            console.log('🔄 localStorage 변화 감지:', e.key, e.newValue);
+
+            if (e.key === 'token' || e.key === 'username') {
+                const token = localStorage.getItem('token');
+                const username = localStorage.getItem('username');
+
+                console.log('🔍 storage 이벤트 후 localStorage 상태:');
+                console.log('   - token:', token);
+                console.log('   - username:', username);
+
+                if (token && username && token !== 'undefined' && token !== 'null') {
+                    console.log('✅ 다른 탭에서 로그인됨 - 상태 동기화');
+                    setIsAuthenticated(true);
+                    setCurrentUser({ username, token });
+                } else {
+                    console.log('❌ 다른 탭에서 로그아웃됨 - 상태 동기화');
+                    setIsAuthenticated(false);
+                    setCurrentUser(null);
+                }
+            }
+        };
+
+        // 커뮤니티페이지에서 storage 이벤트 리스너 등록
+        console.log('📡 커뮤니티페이지 storage 이벤트 리스너 등록');
+        window.addEventListener('storage', handleStorageChange);
+
+        return () => {
+            console.log('📡 커뮤니티페이지 storage 이벤트 리스너 해제');
+            window.removeEventListener('storage', handleStorageChange);
+        };
     }, []);
 
     // 정렬이나 카테고리가 변경될 때 게시물 다시 로드
@@ -62,10 +191,14 @@ function CommunityPage() {
             const orderBy = sortBy === 'latest' ? 'created_at' : 'likes'; // API 명세에 맞는 정렬 파라미터
             const categoryParam = activeCategory === '전체' ? '' : `/${getCategoryAPIValue(activeCategory)}`;
 
+            const token = localStorage.getItem('token');
+            console.log('Load Posts - Token:', token ? 'Present' : 'Missing');
+            console.log('Load Posts - CurrentUser:', currentUser);
+
             const response = await fetch(`${baseUrl}/community/list/${orderBy}${categoryParam}/`, {
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(currentUser?.token && { Authorization: `Token ${currentUser.token}` }),
+                    ...(token && { Authorization: `Token ${token}` }),
                 },
             });
 
@@ -137,14 +270,18 @@ function CommunityPage() {
 
     // 좋아요 토글 함수
     const handleLikeToggle = async (postId) => {
-        if (!isAuthenticated) {
+        const isTokenValid = checkAuthStatus();
+        if (!isTokenValid) {
             alert('로그인이 필요합니다.');
             setShowLoginModal(true);
             return;
         }
 
         try {
-            await communityService.toggleLike(postId, currentUser?.token);
+            const token = localStorage.getItem('token');
+            console.log('Like Toggle - Token:', token ? 'Present' : 'Missing');
+
+            await communityService.toggleLike(postId, token);
             // 좋아요 처리 후 게시물 목록 새로고침
             await loadPosts();
         } catch (error) {
@@ -174,12 +311,57 @@ function CommunityPage() {
         navigate(`/community/${postId}`);
     };
 
+    // 인증 상태 실시간 체크 헬퍼 함수
+    const checkAuthStatus = () => {
+        const token = localStorage.getItem('token');
+        const username = localStorage.getItem('username');
+
+        console.log('🔍 checkAuthStatus 실행:');
+        console.log('   - token:', token);
+        console.log('   - username:', username);
+        console.log(
+            '   - token valid:',
+            token && username && token !== 'undefined' && token !== 'null' && token.trim() !== ''
+        );
+
+        return token && username && token !== 'undefined' && token !== 'null' && token.trim() !== '';
+    };
+
     // 인증 관련 핸들러
     const handleNewPostClick = () => {
-        if (!isAuthenticated) {
-            setShowLoginModal(true);
-        } else {
+        // localStorage를 직접 체크 (React 상태 동기화 지연 방지)
+        const isTokenValid = checkAuthStatus();
+        const token = localStorage.getItem('token');
+        const username = localStorage.getItem('username');
+
+        console.log('🆕 New Post Click - 상세 인증 체크:');
+        console.log('   ==========================================');
+        console.log('   📊 React State:');
+        console.log('     - isAuthenticated:', isAuthenticated);
+        console.log('     - currentUser:', currentUser);
+        console.log('   💾 localStorage:');
+        console.log('     - token exists:', !!token);
+        console.log('     - token value:', token);
+        console.log('     - token type:', typeof token);
+        console.log('     - token length:', token ? token.length : 0);
+        console.log('     - username:', username);
+        console.log('   🔍 검증:');
+        console.log('     - token valid:', isTokenValid);
+        console.log('   ==========================================');
+
+        if (isTokenValid) {
+            // React 상태와 localStorage가 다르면 동기화
+            if (!isAuthenticated) {
+                console.log('🔄 토큰 발견! React 상태 동기화 중...');
+                setIsAuthenticated(true);
+                setCurrentUser({ username, token });
+            }
+            console.log('✅ 인증 성공 - 글쓰기 폼 열기');
             setShowPostForm(true);
+        } else {
+            console.log('❌ 로그인 필요 - 로그인 모달 열기');
+            alert('로그인이 필요합니다. 로그인해주세요.');
+            setShowLoginModal(true);
         }
     };
 
@@ -195,11 +377,15 @@ function CommunityPage() {
     };
 
     const handleLogout = () => {
+        console.log('Logging out - clearing all auth data');
         localStorage.removeItem('token');
         localStorage.removeItem('username');
         setIsAuthenticated(false);
         setCurrentUser(null);
         setShowPostForm(false);
+
+        // 페이지 새로고침으로 완전히 초기화
+        window.location.reload();
     };
 
     const handleSwitchToLogin = () => {
@@ -214,11 +400,216 @@ function CommunityPage() {
 
     const handleLocationTypeChange = (type) => {
         if (type === 'current') {
-            setNewPost({ ...newPost, locationType: type, location: '현재 위치' });
+            setNewPost({
+                ...newPost,
+                locationType: type,
+                location: '현재 위치',
+                latitude: 37.5665,
+                longitude: 126.978,
+            });
         } else {
-            setNewPost({ ...newPost, locationType: type, location: '' });
+            setNewPost({
+                ...newPost,
+                locationType: type,
+                location: '',
+                latitude: null,
+                longitude: null,
+            });
+        }
+        setSearchResults([]);
+        setShowSearchResults(false);
+    };
+
+    // 실제 카카오맵 장소 검색 함수
+    const searchKakaoPlaces = (query) => {
+        if (!query.trim()) {
+            setSearchResults([]);
+            setShowSearchResults(false);
+            return;
+        }
+
+        if (!window.kakao?.maps?.services?.Places) {
+            console.error('카카오맵 서비스가 로드되지 않았습니다 - SDK를 다시 로드합니다');
+
+            // 카카오맵 SDK 강제 재로드
+            loadKakaoSDKAndSearch();
+
+            // 일단 검색은 건너뛰고 빈 결과 표시
+            setIsSearching(false);
+            setSearchResults([]);
+            setShowSearchResults(true);
+            return;
+        }
+
+        setIsSearching(true);
+
+        const ps = new window.kakao.maps.services.Places();
+
+        const searchCallback = (data, status) => {
+            setIsSearching(false);
+
+            if (status === window.kakao.maps.services.Status.OK) {
+                const results = data.map((place) => ({
+                    name: place.place_name,
+                    address: place.address_name,
+                    fullAddress: place.road_address_name || place.address_name,
+                    latitude: parseFloat(place.y),
+                    longitude: parseFloat(place.x),
+                    category: place.category_name,
+                }));
+
+                console.log('검색 결과:', results);
+                setSearchResults(results);
+                setShowSearchResults(true);
+            } else if (status === window.kakao.maps.services.Status.ZERO_RESULT) {
+                setSearchResults([]);
+                setShowSearchResults(true);
+            } else {
+                console.error('검색 중 오류 발생');
+                setSearchResults([]);
+                setShowSearchResults(false);
+            }
+        };
+
+        ps.keywordSearch(query, searchCallback);
+    };
+
+    // 검색 결과에서 장소 선택
+    const selectLocation = (selectedPlace) => {
+        setNewPost({
+            ...newPost,
+            location: selectedPlace.name,
+            latitude: selectedPlace.latitude,
+            longitude: selectedPlace.longitude,
+        });
+        setShowSearchResults(false);
+        setSearchResults([]);
+    };
+
+    // 검색어 입력 핸들러
+    const handleLocationSearch = (e) => {
+        const query = e.target.value;
+        setNewPost({ ...newPost, location: query });
+
+        // 디바운싱
+        if (window.searchTimer) {
+            clearTimeout(window.searchTimer);
+        }
+
+        window.searchTimer = setTimeout(() => {
+            searchKakaoPlaces(query);
+        }, 500);
+    };
+
+    // 카카오 SDK 로드 및 장소 검색 함수
+    const loadKakaoSDKAndSearch = async () => {
+        console.log('=== 카카오 SDK 로드 및 검색 시작 ===');
+
+        try {
+            const apiKey = process.env.REACT_APP_KAKAOMAP_API_KEY;
+
+            if (!apiKey) {
+                console.error('❌ API Key가 없습니다!');
+                return;
+            }
+
+            console.log('1. 카카오 SDK 로드 중...');
+
+            // 이미 로드된 경우 제거
+            const existingScript = document.getElementById('kakao-sdk');
+            if (existingScript) {
+                existingScript.remove();
+            }
+
+            // 카카오 SDK 동적 로드
+            const script = document.createElement('script');
+            script.id = 'kakao-sdk';
+            script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}&libraries=services&autoload=false`;
+            script.async = true;
+
+            script.onload = () => {
+                console.log('✅ 카카오 SDK 스크립트 로드 완료!');
+
+                // 카카오맵 수동 로드 (autoload=false 때문에 필요)
+                window.kakao.maps.load(() => {
+                    console.log('✅ 카카오맵 라이브러리 초기화 완료!');
+
+                    console.log('2. 카카오 객체 상세 확인...');
+                    console.log('   - window.kakao:', !!window.kakao);
+                    console.log('   - window.kakao.maps:', !!window.kakao?.maps);
+                    console.log('   - window.kakao.maps.services:', !!window.kakao?.maps?.services);
+                    console.log('   - window.kakao.maps.services.Places:', !!window.kakao?.maps?.services?.Places);
+
+                    if (
+                        window.kakao &&
+                        window.kakao.maps &&
+                        window.kakao.maps.services &&
+                        window.kakao.maps.services.Places
+                    ) {
+                        console.log('3. 장소 검색 서비스 초기화...');
+
+                        try {
+                            // 장소 검색 서비스 생성
+                            const ps = new window.kakao.maps.services.Places();
+
+                            // 검색 콜백 함수
+                            const searchCallback = (data, status) => {
+                                if (status === window.kakao.maps.services.Status.OK) {
+                                    console.log('✅ 장소 검색 성공!');
+                                    console.log('검색 결과:', data);
+
+                                    // 결과를 우리 형식으로 변환
+                                    const results = data.map((place) => ({
+                                        name: place.place_name,
+                                        address: place.address_name,
+                                        fullAddress: place.road_address_name || place.address_name,
+                                        latitude: parseFloat(place.y),
+                                        longitude: parseFloat(place.x),
+                                        category: place.category_name,
+                                    }));
+
+                                    console.log('변환된 결과:', results);
+
+                                    // 실제 검색 결과 설정 (나중에 실제 검색에서 사용)
+                                    // setSearchResults(results);
+                                    // setShowSearchResults(true);
+                                } else if (status === window.kakao.maps.services.Status.ZERO_RESULT) {
+                                    console.log('❌ 검색 결과가 없습니다.');
+                                } else if (status === window.kakao.maps.services.Status.ERROR) {
+                                    console.log('❌ 검색 중 오류가 발생했습니다.');
+                                }
+                            };
+
+                            // SDK 로드 완료 - 이제 검색 준비됨
+                            console.log('4. 카카오맵 장소 검색 준비 완료! 🎉');
+                        } catch (psError) {
+                            console.error('❌ Places 서비스 생성 실패:', psError);
+                        }
+                    } else {
+                        console.error('❌ 카카오 객체 일부가 로드되지 않음');
+                        console.log('💡 대안: services 없이 REST API 방식 시도');
+
+                        // services가 안 되면 REST API로 시도
+                        console.log('🔧 해결방법:');
+                        console.log('   1. JavaScript 키가 올바른지 확인');
+                        console.log('   2. 새로고침 후 다시 시도');
+                        console.log('   3. services 라이브러리 로드 문제일 수 있음');
+                    }
+                }); // kakao.maps.load 콜백 끝
+            };
+
+            script.onerror = () => {
+                console.error('❌ 카카오 SDK 로드 실패');
+            };
+
+            document.head.appendChild(script);
+        } catch (error) {
+            console.error('❌ SDK 로드 중 에러:', error);
         }
     };
+
+    // 기존 테스트 함수를 SDK 로드 함수로 대체
+    const testKakaoAPI = loadKakaoSDKAndSearch;
 
     // 이미지 업로드 핸들러
     const handleImageChange = (e) => {
@@ -265,7 +656,9 @@ function CommunityPage() {
             return;
         }
 
-        if (!isAuthenticated) {
+        // localStorage 직접 체크로 인증 상태 확인
+        const isTokenValid = checkAuthStatus();
+        if (!isTokenValid) {
             alert('로그인이 필요합니다.');
             setShowLoginModal(true);
             return;
@@ -287,8 +680,8 @@ function CommunityPage() {
             formData.append('title', newPost.title);
             formData.append('content', newPost.content);
             formData.append('category', categoryMap[newPost.category] || 'general');
-            formData.append('latitude', '37.5665'); // TODO: 실제 위치 정보로 교체
-            formData.append('longitude', '126.978'); // TODO: 실제 위치 정보로 교체
+            formData.append('latitude', newPost.latitude || '37.5665');
+            formData.append('longitude', newPost.longitude || '126.978');
             formData.append('location', newPost.location);
 
             // 이미지가 있으면 추가
@@ -296,11 +689,43 @@ function CommunityPage() {
                 formData.append('image', newPost.image);
             }
 
+            // localStorage 전체 확인
+            console.log('LocalStorage 전체 내용:');
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                console.log(`   ${key}: ${value}`);
+            }
+
+            const token = localStorage.getItem('token');
+            const tokenType = typeof token;
+            console.log('Submit Post - Token:', token ? 'Present' : 'Missing');
+            console.log('Submit Post - Token Value:', token);
+            console.log('Submit Post - Token Type:', tokenType);
+            console.log('Submit Post - Token Length:', token ? token.length : 0);
+            console.log('Submit Post - Form Data:');
+            for (let [key, value] of formData.entries()) {
+                console.log(key, value);
+            }
+
+            if (!token || token === 'undefined' || token === 'null') {
+                console.error('❌ 유효하지 않은 토큰:', token);
+                alert('로그인이 필요합니다. 다시 로그인해주세요.');
+
+                // localStorage 정리
+                localStorage.removeItem('token');
+                localStorage.removeItem('username');
+                setIsAuthenticated(false);
+                setCurrentUser(null);
+                setShowLoginModal(true);
+                return;
+            }
+
             const response = await fetch(`${baseUrl}/community/upload/`, {
                 method: 'POST',
                 headers: {
                     // FormData 사용시 Content-Type 헤더를 설정하지 않음 (브라우저가 자동 설정)
-                    Authorization: `Token ${currentUser?.token}`,
+                    Authorization: `Token ${token}`,
                 },
                 body: formData,
             });
@@ -320,9 +745,13 @@ function CommunityPage() {
                     category: '교통',
                     location: '',
                     locationType: 'current',
+                    latitude: null,
+                    longitude: null,
                     image: null,
                     imagePreview: null,
                 });
+                setSearchResults([]);
+                setShowSearchResults(false);
                 setShowPostForm(false);
                 alert('게시물이 성공적으로 작성되었습니다!');
             } else {
@@ -375,9 +804,11 @@ function CommunityPage() {
                     <h1 className="page-title">Seoul AI 커뮤니티</h1>
                 </div>
                 <div className="header-right">
-                    {isAuthenticated ? (
+                    {isAuthenticated || checkAuthStatus() ? (
                         <div className="user-info">
-                            <span className="welcome-text">안녕하세요, {currentUser?.username}님</span>
+                            <span className="welcome-text">
+                                안녕하세요, {currentUser?.username || localStorage.getItem('username')}님
+                            </span>
                             <button className="new-post-btn" onClick={handleNewPostClick}>
                                 + 새 글 작성
                             </button>
@@ -390,9 +821,7 @@ function CommunityPage() {
                             <button className="login-btn" onClick={() => setShowLoginModal(true)}>
                                 로그인
                             </button>
-                            <button className="new-post-btn" onClick={handleNewPostClick}>
-                                + 새 글 작성
-                            </button>
+                            <span className="auth-hint">로그인 후 글을 작성할 수 있습니다.</span>
                         </div>
                     )}
                 </div>
@@ -503,13 +932,46 @@ function CommunityPage() {
                                             </button>
                                         </div>
                                         {newPost.locationType === 'search' && (
-                                            <input
-                                                type="text"
-                                                value={newPost.location}
-                                                onChange={(e) => setNewPost({ ...newPost, location: e.target.value })}
-                                                placeholder="위치를 입력하세요 (예: 강남구 역삼동)"
-                                                required
-                                            />
+                                            <div className="location-search-container">
+                                                <input
+                                                    type="text"
+                                                    value={newPost.location}
+                                                    onChange={handleLocationSearch}
+                                                    placeholder="위치를 입력하세요 (예: 강남역, 홍대)"
+                                                    required
+                                                />
+                                                {isSearching && <div className="search-loading">🔍 검색 중...</div>}
+                                                {showSearchResults && searchResults.length > 0 && (
+                                                    <div className="search-results">
+                                                        {searchResults.map((place, index) => (
+                                                            <div
+                                                                key={index}
+                                                                className="search-result-item"
+                                                                onClick={() => selectLocation(place)}
+                                                            >
+                                                                <div className="place-name">{place.name}</div>
+                                                                <div className="place-address">{place.fullAddress}</div>
+                                                                <div className="place-category">{place.category}</div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                {showSearchResults &&
+                                                    searchResults.length === 0 &&
+                                                    !isSearching &&
+                                                    newPost.location && (
+                                                        <div className="no-search-results">검색 결과가 없습니다.</div>
+                                                    )}
+                                                {newPost.latitude && newPost.longitude && (
+                                                    <div className="selected-location-info">
+                                                        📍 선택된 위치: {newPost.location}
+                                                        <span className="coordinates">
+                                                            ({newPost.latitude.toFixed(4)},{' '}
+                                                            {newPost.longitude.toFixed(4)})
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         )}
                                         {newPost.locationType === 'current' && (
                                             <div className="current-location">

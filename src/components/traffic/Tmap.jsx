@@ -338,9 +338,9 @@ const Tmap = ({
                 if (!container) {
                     throw new Error(`지도 컨테이너를 찾을 수 없습니다: ${mapId}`);
                 }
-                
+
                 console.log(`지도 컨테이너 발견: ${mapId}`, container);
-                
+
                 if (container) {
                     // 남아있는 기존 자식 노드 제거
                     while (container.firstChild) container.removeChild(container.firstChild);

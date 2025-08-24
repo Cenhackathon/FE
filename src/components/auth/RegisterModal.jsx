@@ -111,7 +111,7 @@ function RegisterModal({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) 
             // TODO: 백엔드 배포시 실제 API URL로 교체
             const baseUrl = 'https://openddm.store';
 
-            const response = await fetch(`${baseUrl}/api/auth/registration/`, {
+            const response = await fetch(`${baseUrl}/accounts/registration/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
