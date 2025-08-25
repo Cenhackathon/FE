@@ -20,6 +20,17 @@ const Tmap = ({
     const [trafficVisible, setTrafficVisible] = useState(true);
     const [autoUpdate, setAutoUpdate] = useState(true);
 
+    // 불꽃 마커 SVG(Data URI) - 외부 네트워크 상태와 상관없이 항상 표시되도록 데이터 URI 사용
+    const fireIconDataUri =
+        'data:image/svg+xml;charset=UTF-8,' +
+        encodeURIComponent(
+            `\
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                <path fill="#ff6b00" d="M13.5 1.6c.2.4.4.9.5 1.4c.3 1.3.1 2.9-.7 4.2c-.8 1.4-2.2 2.5-3.9 3.1c.2-1.5-.1-3.1-1.1-4.6c-.3-.4-.6-.8-.9-1.1C5 2.9 3.7 2 2.9 1.6c-.1 1.9.4 3.9 1.6 5.6c1.3 1.8 3.3 3.2 5.7 3.9c-.9.3-1.8.8-2.6 1.6c-1.2 1.1-2.1 2.9-2.1 4.7c0 3.1 2.5 5.6 6.5 5.6s6.5-2.5 6.5-5.6c0-2.2-1-4.3-2.3-6.2c-.9-1.2-1.9-2.3-2.8-3.4c-.7-.8-1.3-1.5-1.8-2.2c-.5-.8-.8-1.6-.9-2.4c0-.5 0-1 .1-1.4z"/>
+            </svg>
+        `
+        );
+
     // Polyline 생성/갱신 함수
     const fetchTraffic = useCallback(async () => {
         if (!mapRef.current) return;
@@ -98,8 +109,9 @@ const Tmap = ({
 
         // 알림에 따라 마커 추가
         (alerts || []).forEach((alert) => {
-            if (alert.coordinate && alert.coordinate.length === 2) {
-                const [lon, lat] = alert.coordinate;
+            const coords = alert.coordinate || alert.coordinates;
+            if (coords && coords.length === 2) {
+                const [lon, lat] = coords;
                 const iconurl =
                     alert.isAccidentNode === 'Y' && (alert.accidentUpperCode === 'A' || alert.accidentUpperCode === 'D')
                         ? redmarker
@@ -144,10 +156,12 @@ const Tmap = ({
                     map: mapRef.current,
                     title: `🔥 인기 #${index + 1}: ${post.title}`,
                     icon: {
-                        url: 'https://api.iconify.design/emojione:fire.svg?width=32&height=32',
+                        url: fireIconDataUri,
                         size: new window.Tmapv2.Size(32, 32),
                         anchor: new window.Tmapv2.Point(16, 32),
                     },
+                    visible: true,
+                    zIndex: 1000,
                 });
 
                 // 마커 클릭 시 정보창 표시
@@ -215,6 +229,13 @@ const Tmap = ({
         });
 
         console.log(`총 ${markersRef.current.length}개의 인기게시물 마커 생성됨`);
+        // 첫 인기 게시물 위치로 카메라 이동하여 사용자에게 명확히 보이도록 처리
+        if (markersRef.current.length > 0 && mapRef.current) {
+            const first = popularPosts[0];
+            const center = new window.Tmapv2.LatLng(first.latitude, first.longitude);
+            mapRef.current.setZoom(16);
+            mapRef.current.panTo(center);
+        }
     }, [popularPosts]);
 
     // 현재 위치 마커 업데이트
