@@ -219,17 +219,21 @@
     display: flex;
     align-items: flex-start;
     gap: 10px;
-    padding: 10px;
-    margin-bottom: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    border-left: 3px solid #ff6b6b;
+    padding: 12px;
+    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 10px;
+    border-left: 4px solid #ff6b6b;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.9);
     transition: all 0.3s ease;
 }
 
 .popular-post-item:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateX(5px);
+    background: rgba(255, 255, 255, 0.95);
+    transform: translateX(5px) translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
 .post-rank {
@@ -250,14 +254,15 @@
 }
 
 .post-title-small {
-    color: white;
-    font-size: 0.85rem;
-    font-weight: 600;
-    margin-bottom: 4px;
-    line-height: 1.3;
+    color: #1a1a2e;
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    line-height: 1.4;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    text-shadow: none;
 }
 
 .post-meta {
@@ -268,33 +273,38 @@
 }
 
 .post-category {
-    background: rgba(102, 126, 234, 0.8);
+    background: linear-gradient(135deg, #667eea, #764ba2);
     color: white;
-    font-size: 0.7rem;
-    padding: 0.2rem 0.5rem;
-    border-radius: 6px;
-    font-weight: 500;
+    font-size: 0.75rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 8px;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
 }
 
 .post-likes {
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 0.7rem;
-    font-weight: 500;
+    color: rgba(75, 75, 120, 0.8);
+    font-size: 0.75rem;
+    font-weight: 600;
 }
 
 .post-location {
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 0.7rem;
+    color: rgba(75, 75, 120, 0.7);
+    font-size: 0.75rem;
+    font-weight: 500;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .no-popular-posts-msg {
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(75, 75, 120, 0.7);
     font-style: italic;
     text-align: center;
-    padding: 1rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    border: 1px dashed rgba(75, 75, 120, 0.3);
 }
 
 /* 위치 정보 스타일 */
