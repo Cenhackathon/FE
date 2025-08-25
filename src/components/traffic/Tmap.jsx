@@ -98,8 +98,8 @@ const Tmap = ({
 
         // 알림에 따라 마커 추가
         (alerts || []).forEach((alert) => {
-            if (alert.coordinates && alert.coordinates.length === 2) {
-                const [lon, lat] = alert.coordinates;
+            if (alert.coordinate && alert.coordinate.length === 2) {
+                const [lon, lat] = alert.coordinate;
                 const iconurl =
                     alert.isAccidentNode === 'Y' && (alert.accidentUpperCode === 'A' || alert.accidentUpperCode === 'D')
                         ? redmarker
@@ -465,7 +465,7 @@ const Tmap = ({
     }, [trafficVisible, fetchTraffic]);
 
     return (
-        <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+        <div style={{ width: '90%', height: '100%', position: 'relative' }}>
             <div id={mapId} style={{ width: '100%', height: '100%' }} />
             <div className="top-right-buttons">
                 <button className="top-right-button" onClick={() => setTrafficVisible((prev) => !prev)}>

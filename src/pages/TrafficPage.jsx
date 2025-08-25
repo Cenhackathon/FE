@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/TrafficPageStyles.css';
-import Tmap from '../components/traffic/Tmap_traffic';
+import Tmap_traffic from '../components/traffic/Tmap_traffic';
 
 const TrafficPage = () => {
     const navigate = useNavigate();
@@ -124,7 +124,7 @@ const TrafficPage = () => {
             </header>
 
             <div className="map-placeholder">
-                <Tmap mapId="trafficmapDiv" alerts={alerts} />
+                <Tmap_traffic mapId="trafficmapDiv" alerts={alerts} />
             </div>
 
             <div className="sidebar">
