@@ -33,39 +33,32 @@ function CommunityPage() {
     const [sortBy, setSortBy] = useState('latest'); // 'latest' or 'likes'
     const [activeCategory, setActiveCategory] = useState('전체');
 
-    // 인증 관련 상태 - localStorage에서 초기값 설정
-    const [isAuthenticated, setIsAuthenticated] = useState(() => {
-        const token = localStorage.getItem('token');
-        const username = localStorage.getItem('username');
-        return !!(token && username && token !== 'undefined' && token !== 'null' && token.trim() !== '');
-    });
-    const [currentUser, setCurrentUser] = useState(() => {
-        const token = localStorage.getItem('token');
-        const username = localStorage.getItem('username');
-        if (token && username && token !== 'undefined' && token !== 'null' && token.trim() !== '') {
-            return { username, token };
-        }
-        return null;
-    });
+    // 인증 관련 상태
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [currentUser, setCurrentUser] = useState(null);
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [showRegisterModal, setShowRegisterModal] = useState(false);
 
     // 컴포넌트 마운트시 로그인 상태 확인 및 게시물 로드
     useEffect(() => {
-        console.log('🔍 CommunityPage 마운트 - 인증 상태 확인 시작');
-
-        // localStorage에서 인증 정보 가져오기
+        // 매번 새로 가져오기
         const token = localStorage.getItem('token');
         const username = localStorage.getItem('username');
 
-        console.log('💾 localStorage 정보:');
-        console.log('   - token exists:', !!token);
-        console.log('   - token value:', token);
-        console.log('   - token type:', typeof token);
-        console.log('   - token length:', token ? token.length : 0);
-        console.log('   - username:', username);
+        // 즉시 상태 설정 (조건 없이)
+        if (token && username) {
+            setIsAuthenticated(true);
+            setCurrentUser({ username, token });
+        }
 
-        // localStorage 전체 내용 확인
+        console.log('🔍 CommunityPage 마운트 - 인증 상태 확인:');
+        console.log('   - localStorage token:', token ? 'Present' : 'Missing');
+        console.log('   - localStorage username:', username);
+        console.log('   - Token value:', token);
+        console.log('   - Token type:', typeof token);
+        console.log('   - Token length:', token ? token.length : 0);
+
+        // localStorage 전체 내용 확인 (더 상세히)
         console.log('📋 localStorage 전체 내용:');
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
@@ -73,22 +66,21 @@ function CommunityPage() {
             console.log(`   [${i}] ${key}: "${value}" (${typeof value}, length: ${value ? value.length : 0})`);
         }
 
-        // 토큰 유효성 검사 (checkAuthStatus 함수 사용)
-        const isTokenValid = token && username && token !== 'undefined' && token !== 'null' && token.trim() !== '';
+        // 직접적으로 다시 한번 확인
+        const directToken = localStorage.getItem('token');
+        const directUsername = localStorage.getItem('username');
+        console.log('🔄 직접 재확인:');
+        console.log('   - directToken:', directToken);
+        console.log('   - directUsername:', directUsername);
 
-        if (isTokenValid) {
-            console.log('✅ 유효한 토큰 발견 - 로그인 상태 복원');
+        if (token && username && token !== 'undefined' && token !== 'null') {
+            console.log('✅ 로그인 상태 복원 성공');
             setIsAuthenticated(true);
             setCurrentUser({ username, token });
         } else {
-            console.log('❌ 유효하지 않은 토큰 - 로그인 상태 초기화');
-            // localStorage에서 잘못된 값들만 정리 (전체 삭제 대신)
-            if (token === 'undefined' || token === 'null' || token === '') {
-                localStorage.removeItem('token');
-            }
-            if (username === 'undefined' || username === 'null' || username === '') {
-                localStorage.removeItem('username');
-            }
+            console.log('❌ 로그인 상태 없음 - localStorage 정리');
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
             setIsAuthenticated(false);
             setCurrentUser(null);
         }
@@ -270,8 +262,7 @@ function CommunityPage() {
 
     // 좋아요 토글 함수
     const handleLikeToggle = async (postId) => {
-        const isTokenValid = checkAuthStatus();
-        if (!isTokenValid) {
+        if (!isAuthenticated) {
             alert('로그인이 필요합니다.');
             setShowLoginModal(true);
             return;
@@ -311,26 +302,9 @@ function CommunityPage() {
         navigate(`/community/${postId}`);
     };
 
-    // 인증 상태 실시간 체크 헬퍼 함수
-    const checkAuthStatus = () => {
-        const token = localStorage.getItem('token');
-        const username = localStorage.getItem('username');
-
-        console.log('🔍 checkAuthStatus 실행:');
-        console.log('   - token:', token);
-        console.log('   - username:', username);
-        console.log(
-            '   - token valid:',
-            token && username && token !== 'undefined' && token !== 'null' && token.trim() !== ''
-        );
-
-        return token && username && token !== 'undefined' && token !== 'null' && token.trim() !== '';
-    };
-
     // 인증 관련 핸들러
     const handleNewPostClick = () => {
-        // localStorage를 직접 체크 (React 상태 동기화 지연 방지)
-        const isTokenValid = checkAuthStatus();
+        // 실시간으로 localStorage 재확인
         const token = localStorage.getItem('token');
         const username = localStorage.getItem('username');
 
@@ -346,11 +320,12 @@ function CommunityPage() {
         console.log('     - token length:', token ? token.length : 0);
         console.log('     - username:', username);
         console.log('   🔍 검증:');
-        console.log('     - token valid:', isTokenValid);
+        console.log('     - token valid:', token && token !== 'undefined' && token !== 'null');
+        console.log('     - final auth check:', isAuthenticated && token && token !== 'undefined' && token !== 'null');
         console.log('   ==========================================');
 
-        if (isTokenValid) {
-            // React 상태와 localStorage가 다르면 동기화
+        // 토큰이 있으면 상태도 동기화
+        if (token && username && token !== 'undefined' && token !== 'null') {
             if (!isAuthenticated) {
                 console.log('🔄 토큰 발견! React 상태 동기화 중...');
                 setIsAuthenticated(true);
@@ -359,9 +334,9 @@ function CommunityPage() {
             console.log('✅ 인증 성공 - 글쓰기 폼 열기');
             setShowPostForm(true);
         } else {
-            console.log('❌ 로그인 필요 - 로그인 모달 열기');
-            alert('로그인이 필요합니다. 로그인해주세요.');
-            setShowLoginModal(true);
+            console.log('❌ 로그인 필요 - 메인페이지로 이동');
+            alert('로그인이 필요합니다. 메인페이지에서 로그인해주세요.');
+            window.location.href = '/';
         }
     };
 
@@ -656,9 +631,7 @@ function CommunityPage() {
             return;
         }
 
-        // localStorage 직접 체크로 인증 상태 확인
-        const isTokenValid = checkAuthStatus();
-        if (!isTokenValid) {
+        if (!isAuthenticated) {
             alert('로그인이 필요합니다.');
             setShowLoginModal(true);
             return;
@@ -804,11 +777,9 @@ function CommunityPage() {
                     <h1 className="page-title">Seoul AI 커뮤니티</h1>
                 </div>
                 <div className="header-right">
-                    {isAuthenticated || checkAuthStatus() ? (
+                    {isAuthenticated ? (
                         <div className="user-info">
-                            <span className="welcome-text">
-                                안녕하세요, {currentUser?.username || localStorage.getItem('username')}님
-                            </span>
+                            <span className="welcome-text">안녕하세요, {currentUser?.username}님</span>
                             <button className="new-post-btn" onClick={handleNewPostClick}>
                                 + 새 글 작성
                             </button>
@@ -821,7 +792,9 @@ function CommunityPage() {
                             <button className="login-btn" onClick={() => setShowLoginModal(true)}>
                                 로그인
                             </button>
-                            <span className="auth-hint">로그인 후 글을 작성할 수 있습니다.</span>
+                            <button className="new-post-btn" onClick={handleNewPostClick}>
+                                + 새 글 작성
+                            </button>
                         </div>
                     )}
                 </div>
