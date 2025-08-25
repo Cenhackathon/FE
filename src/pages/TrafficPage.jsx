@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/TrafficPageStyles.css';
-import Tmap from '../components/traffic/Tmap';
+import Tmap from '../components/traffic/Tmap_traffic';
 
 const TrafficPage = () => {
     const navigate = useNavigate();

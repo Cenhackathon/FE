@@ -8,7 +8,6 @@ import { communityService } from '../services/communityService';
 const Livemap = () => {
     const navigate = useNavigate();
     const [posts, setPosts] = useState([]); // 교통혼잡도 top3
-    const [prediction, setPrediction] = useState([]); // 예측 데이터
     const [alerts, setAlerts] = useState([]); // 실시간 알림
     const [popularPosts, setPopularPosts] = useState([]); // 인기게시물
     const [currentLocation, setCurrentLocation] = useState({
@@ -128,40 +127,28 @@ const Livemap = () => {
 
             setPosts(topPosts);
 
-            // 실시간 알림 백엔드 호출 (오류 처리 개선)
-            try {
-                const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://127.0.0.1:8000';
-                const response = await axios.get(`${API_BASE_URL}/`, {
-                    timeout: 5000, // 5초 타임아웃
-                });
-                const data = response.data;
-                const newAlerts =
-                    data.posts
-                        ?.filter((post) => post.isAccidentNode === 'Y')
-                        .map((post) => ({
-                            type: 'Y',
-                            message: post.description,
-                            traffictype: post.accidentUppercode,
-                            coordinates: post.coordinates,
-                        })) || [];
-                setAlerts(newAlerts);
-                setPrediction(data.prediction || []);
-            } catch (backendError) {
-                console.warn('백엔드 서버에 연결할 수 없습니다:', backendError.message);
-                // 백엔드 오류시 기본값 설정
-                setAlerts([]);
-                setPrediction(['백엔드 서버와 연결할 수 없습니다']);
-            }
+            // 실시간 알림 백엔드 호출
+            const response = await fetch('https://openddm.store/traffic/traffic_current_info/');
+            const data = await response.json();
+
+            // 두 버전의 데이터 구조를 모두 지원
+            const newAlerts = data
+                .filter((post) => post.isAccidentNode === 'Y')
+                .slice(-10)
+                .reverse()
+                .map((post) => ({
+                    ...post,
+                    // 기존 구조와 호환성 유지
+                    type: 'Y',
+                    message: post.description,
+                    traffictype: post.accidentUpperCode || post.accidentUppercode,
+                    coordinates: post.coordinates,
+                }));
+            setAlerts(newAlerts);
+
+            // setPrediction(data.prediction || []);
         } catch (error) {
-            console.error('전체 데이터 로드 에러:', error);
-            // T맵 API 오류시 기본값 설정
-            setPosts([
-                { name: '1. 데이터를 불러올 수 없습니다' },
-                { name: '2. API 키를 확인해주세요' },
-                { name: '3. 네트워크 연결을 확인해주세요' },
-            ]);
-            setAlerts([]);
-            setPrediction(['데이터 로드 실패']);
+            console.log('에러: ', error);
         }
     }, [getAddressName]);
 
@@ -269,11 +256,6 @@ const Livemap = () => {
                     {posts.map((post, index) => (
                         <li key={index}>{`${index + 1}. ${post.name}`}</li>
                     ))}
-                </ul>
-
-                <h3>예측 데이터</h3>
-                <ul className="legend-list">
-                    <p className="prediction-text">도로 혼잡 예상 구간: {prediction.join(', ')}</p>
                 </ul>
 
                 <h3>실시간 알림</h3>

@@ -174,11 +174,6 @@
     font-weight: 600;
 }
 
-.panel-controls {
-    display: flex;
-    gap: 0.5rem;
-}
-
 .panel-content {
     padding: 1.5rem;
     min-height: 110px;
