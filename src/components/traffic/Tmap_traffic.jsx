@@ -67,17 +67,20 @@ const Tmap_traffic = ({ alerts }) => {
 
     // 알림에 따라 마크 추가
     const addAlertMarkers = useCallback(() => {
-        if(!mapRef.current || !window.Tmapv2) return;
+        if (!mapRef.current || !window.Tmapv2) return;
 
         // 기존 마커 제거
-        markerRef.current.forEach(marker => marker.setMap(null));
+        markerRef.current.forEach((marker) => marker.setMap(null));
         markerRef.current = [];
 
         // 알림에 따라 마커 추가
-        (alerts || []).forEach(alert => {
-            if(alert.coordinate && alert.coordinate.length === 2){
+        (alerts || []).forEach((alert) => {
+            if (alert.coordinate && alert.coordinate.length === 2) {
                 const [lon, lat] = alert.coordinate;
-                const iconurl = alert.isAccidentNode === 'Y' && (alert.accidentUpperCode === 'A' || alert.accidentUpperCode === 'D') ? redmarker : yellowmarker;
+                const iconurl =
+                    alert.isAccidentNode === 'Y' && (alert.accidentUpperCode === 'A' || alert.accidentUpperCode === 'D')
+                        ? redmarker
+                        : yellowmarker;
 
                 const marker = new window.Tmapv2.Marker({
                     position: new window.Tmapv2.LatLng(lat, lon),
@@ -92,7 +95,7 @@ const Tmap_traffic = ({ alerts }) => {
     }, [mapRef, alerts]);
 
     useEffect(() => {
-        if(mapRef.current){
+        if (mapRef.current) {
             addAlertMarkers();
         }
     }, [alerts, addAlertMarkers]);

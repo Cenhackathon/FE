@@ -23,14 +23,22 @@ export const communityService = {
         // API 호출 로직
     },
 
-    // 인기 게시물 조회 (좋아요 10개 이상)
+    // 인기 게시물 조회 (좋아요 5개 이상)
     getPopularPosts: async () => {
         try {
+            const token = localStorage.getItem('token');
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+
+            // 토큰이 있으면 Authorization 헤더 추가
+            if (token) {
+                headers['Authorization'] = `Token ${token}`;
+            }
+
             const response = await fetch(`${API_BASE_URL}/mainpage/pop/`, {
                 method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: headers,
             });
 
             if (!response.ok) {
