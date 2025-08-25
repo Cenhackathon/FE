@@ -411,7 +411,16 @@ function MainPage() {
                                 <div className="traffic-section-title">
                                     <h4>혼잡 예상 구간</h4>
                                 </div>
-                                <p className="prediction-text">청량리역, 장안동 사거리</p>
+                                
+                                <ul className="traffic-list">
+                                    {posts.map((post, index) =>(
+                                        <li key = {index}>
+                                            {`${post.name}`
+                                            .slice(1)
+                                            }
+                                        </li>
+                                    ))}
+                                </ul>
                             </div>
                         </div>
                     </section>
