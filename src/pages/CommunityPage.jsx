@@ -774,7 +774,7 @@ function CommunityPage() {
                     <button className="back-btn" onClick={handleBack}>
                         ← 돌아가기
                     </button>
-                    <h1 className="page-title">Seoul AI 커뮤니티</h1>
+                    <h1 className="page-title">Seoul AI Community</h1>
                 </div>
                 <div className="header-right">
                     {isAuthenticated ? (

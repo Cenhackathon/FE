@@ -119,7 +119,7 @@ const TrafficPage = () => {
                     <button className="back-btn" onClick={handleBack}>
                         ← 돌아가기
                     </button>
-                    <h1 className="page-title">Traffic</h1>
+                    <h1 className="page-title">Seoul AI Traffic</h1>
                 </div>
             </header>
 
@@ -130,18 +130,10 @@ const TrafficPage = () => {
             <div className="sidebar">
                 <h3>🚦 교통 혼잡도 안내</h3>
                 <ul className="legend-list">
-                    <li>
-                        <span className="color-box red-box"></span> 정체
-                    </li>
-                    <li>
-                        <span className="color-box orange-box"></span> 지체
-                    </li>
-                    <li>
-                        <span className="color-box yellow-box"></span> 서행
-                    </li>
-                    <li>
-                        <span className="color-box green-box"></span> 원활
-                    </li>
+                    <li><span className="color-box red-box"></span> 정체</li>
+                    <li><span className="color-box orange-box"></span> 지체</li>
+                    <li><span className="color-box yellow-box"></span> 서행</li>
+                    <li><span className="color-box green-box"></span> 원활</li>
                 </ul>
 
                 <h3>교통 혼잡도 TOP3</h3>
