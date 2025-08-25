@@ -32,6 +32,14 @@ const ShelterList = () => {
     const currentItems = shelters.slice(indexOfFirstItem, indexOfLastItem);
     const totalPages = Math.ceil(shelters.length / itemsPerPage);
 
+    const pageGroupSize = 5; // 한 번에 보여줄 페이지 번호 개수
+    const currentPageGroup = Math.ceil(currentPage / pageGroupSize); // 현재 페이지 그룹
+    
+    let startPage = (currentPageGroup - 1) * pageGroupSize + 1;
+    let endPage = startPage + pageGroupSize - 1;
+    if (endPage > totalPages) {
+        endPage = totalPages;
+    }
 
     if (loading) {
         return <div>📋 쉼터 목록을 불러오는 중...</div>;
@@ -52,7 +60,7 @@ const ShelterList = () => {
                 {currentItems.map((shelter, index) => (
                     <li
                         key={shelter.index}
-                        style={{ border: '1px solid #eee', marginBottom: '10px', padding: '10px', borderRadius: '4px' }}
+                        style={{ border: '1px solid #eee', marginBottom: '10px', padding: '10px', borderRadius: '4px', wordBreak: 'break-all' }}
                     >
                         <strong>{shelter.name}</strong> ({shelter.category2})
                         <br />
@@ -67,7 +75,7 @@ const ShelterList = () => {
                 <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
                     이전
                 </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+                {Array.from({ length: (endPage - startPage + 1) }, (_, i) => startPage + i).map(number => (
                     <button
                         key={number}
                         onClick={() => setCurrentPage(number)}
