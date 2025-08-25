@@ -155,21 +155,29 @@ const Livemap = () => {
     // 인기게시물 로드 함수
     const loadPopularPosts = useCallback(async () => {
         try {
+            console.log('🔍 인기게시물 로드 시작...');
+            const token = localStorage.getItem('token');
+            console.log('🔑 토큰 상태:', token ? '토큰 있음' : '토큰 없음');
+
             const data = await communityService.getPopularPosts();
+            console.log('📊 서버 응답 데이터:', data);
+
             // API 응답 데이터를 UI 형태로 변환
-            const transformedPosts = data.map((post) => ({
-                id: post.post_id,
-                title: post.title,
-                content: post.content,
-                author: post.author,
-                time: formatTime(post.created_at),
-                likes: post.likes,
-                comments: post.comments?.length || 0,
-                category: getCategoryUIValue(post.category),
-                latitude: post.latitude,
-                longitude: post.longitude,
-                location: post.location,
-            }));
+            const transformedPosts = (data || [])
+                .filter((post) => Number(post?.likes) >= 1 && post?.latitude && post?.longitude) // 좋아요 1개 이상으로 변경
+                .map((post) => ({
+                    id: post.post_id,
+                    title: post.title,
+                    content: post.content,
+                    author: post.author,
+                    time: formatTime(post.created_at),
+                    likes: Number(post.likes) || 0,
+                    comments: post.comments?.length || 0,
+                    category: getCategoryUIValue(post.category),
+                    latitude: typeof post.latitude === 'string' ? parseFloat(post.latitude) : post.latitude,
+                    longitude: typeof post.longitude === 'string' ? parseFloat(post.longitude) : post.longitude,
+                    location: post.location,
+                }));
             setPopularPosts(transformedPosts);
         } catch (error) {
             console.error('인기 게시물 로드 실패:', error);
