@@ -51,3 +51,40 @@
   margin-bottom: 20px;
  }
 
+
+ 
+  .forecast {
+    display: flex;
+    overflow-x: auto; /* 가로 스크롤 활성화 */
+    padding-bottom: 1rem;
+    border-top: 1px solid #eee;
+  
+    /* 👇 이 부분을 수정/추가하세요 */
+    max-width: 500px;     /* 컨테이너의 최대 너비를 약 3개 아이템 크기로 제한 */
+    margin: 1rem auto 0;  /* 위쪽 여백 및 컨테이너 가운데 정렬 */
+  }
+  
+  .forecast-item {
+    /* 👇 너비를 min-width 대신 고정 값으로 변경 */
+    flex: 0 0 90px; /* 아이템 너비를 90px로 고정 (줄어들거나 늘어나지 않음) */
+    text-align: center;
+    padding: 0.5rem;
+    border-right: 1px solid #eee;
+  }
+
+/* 마지막 아이템의 오른쪽 구분선 제거 */
+.forecast-item:last-child {
+  border-right: none;
+}
+
+/* 스크롤바 스타일링 (선택 사항) */
+.forecast::-webkit-scrollbar {
+  height: 8px;
+}
+.forecast::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 4px;
+}
+.forecast::-webkit-scrollbar-track {
+  background-color: #f0f0f0;
+}

@@ -51,7 +51,7 @@
   }
   
   .map-view-section {
-    flex-grow: 3; /* MapView가 다른 요소보다 2배 더 넓은 공간을 차지 */
+    flex-grow: 4; /* MapView가 다른 요소보다 2배 더 넓은 공간을 차지 */
     background-color: #f0f0f0; /* 배경색으로 구분 */
     border-radius: 20px;
     overflow: hidden;
@@ -81,7 +81,7 @@
   }
   
   .top-card {
-    flex: 0 0 40%; /* WeatherCard가 오른쪽 패널의 30% 높이 차지 */
+    flex: 0 0 50%; /* WeatherCard가 오른쪽 패널의 30% 높이 차지 */
     background: #f8f9fa;
     border-radius:20px;
     overflow: hidden; /* 내용이 넘칠 경우를 대비 */
@@ -89,7 +89,7 @@
   }
   
   .bottom-list {
-    flex: 0 0 60%; /* ShelterList가 남은 공간을 모두 차지 */
+    flex: 0 0 50%; /* ShelterList가 남은 공간을 모두 차지 */
     background: #f8f9fa;
     border-radius: 20px;
     overflow-y: auto;
