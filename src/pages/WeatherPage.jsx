@@ -5,17 +5,7 @@ import ShelterList from "../components/weather/ShelterList";
 import "../styles/WeatherPage.css";
 
 export default function WeatherPage() {
-  const mockWeather = {
-    temperature: 27.6,
-    uvIndex: 8,
-    riskLevel: "위험"
-  };
-
-  const mockShelters = [
-    { id: 1, name: "무더위 쉼터 A", distance: "200m" },
-    { id: 2, name: "도서관 쉼터 B", distance: "500m" }
-  ];
-
+  
   return (
     <div className="weatherpage">
     <header className="weather-header">
@@ -32,10 +22,10 @@ export default function WeatherPage() {
       
         <div className="side-panel">
           <div className="top-card">
-            <WeatherCard data={mockWeather} />
+            <WeatherCard />
           </div>
           <div className="bottom-list">
-            <ShelterList shelters={mockShelters} />
+            <ShelterList  />
           </div>
         </div>
       </div>

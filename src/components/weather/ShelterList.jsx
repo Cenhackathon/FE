@@ -9,7 +9,7 @@ const ShelterList = () => {
     const API_BASE_URL = 'https://openddm.store';
 
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 4
+    const itemsPerPage = 3
 
     useEffect(() => {
         const fetchShelters = async () => {
