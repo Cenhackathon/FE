@@ -212,7 +212,7 @@ const Livemap = () => {
                     <button className="back-btn" onClick={handleBack}>
                         ← 돌아가기
                     </button>
-                    <h1 className="page-title">LiveMap</h1>
+                    <h1 className="page-title">Seoul AI LiveMap</h1>
                 </div>
             </header>
 
