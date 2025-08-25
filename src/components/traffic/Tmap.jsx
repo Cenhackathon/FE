@@ -465,7 +465,7 @@ const Tmap = ({
     }, [trafficVisible, fetchTraffic]);
 
     return (
-        <div style={{ width: '90%', height: '100%', position: 'relative' }}>
+        <div style={{ width: '100%', height: '100%', position: 'relative' }}>
             <div id={mapId} style={{ width: '100%', height: '100%' }} />
             <div className="top-right-buttons">
                 <button className="top-right-button" onClick={() => setTrafficVisible((prev) => !prev)}>
