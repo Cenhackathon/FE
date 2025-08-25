@@ -415,9 +415,7 @@ function MainPage() {
                                 <ul className="traffic-list">
                                     {posts.map((post, index) =>(
                                         <li key = {index}>
-                                            {`${post.name}`
-                                            .slice(1)
-                                            }
+                                            {`${post.name}`}
                                         </li>
                                     ))}
                                 </ul>

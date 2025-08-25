@@ -10,14 +10,6 @@ export default function MapView() {
     />
   );
 }
-
-
-
-
-
-
-
-
   /*return (
     <div className="map-container">
       <Map center={{ lat: 33.450701, lng: 126.570667 }} className="map-area" level={4}>
