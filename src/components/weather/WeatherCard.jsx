@@ -42,7 +42,11 @@ const WeatherCard = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+<<<<<<< Updated upstream
     const API_BASE_URL = 'https://openddm.store';
+=======
+  const API_BASE_URL = 'https://openddm.store';
+>>>>>>> Stashed changes
 
     useEffect(() => {
         const fetchWeather = async (lat, lon) => {
