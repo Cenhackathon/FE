@@ -1,27 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-/*export default function ShelterList({ shelters }) {
-  return (
-    <div style={{padding: "1rem"}}>
-      <h2>인근 쉼터</h2>
-      <ul>
-        {shelters.map((shelter) => (
-          <li key={shelter.id}>
-            {shelter.name} - {shelter.distance}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}*/
-
 const ShelterList = () => {
     const [shelters, setShelters] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     const API_BASE_URL = 'https://openddm.store';
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 4
 
     useEffect(() => {
         const fetchShelters = async () => {
@@ -39,6 +27,12 @@ const ShelterList = () => {
         fetchShelters();
     }, []);
 
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = shelters.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(shelters.length / itemsPerPage);
+
+
     if (loading) {
         return <div>📋 쉼터 목록을 불러오는 중...</div>;
     }
@@ -55,9 +49,9 @@ const ShelterList = () => {
         <div style={{ padding: '1rem' }}>
             <h2>🌐 무더위 쉼터</h2>
             <ul style={{ listStyleType: 'none', padding: 0 }}>
-                {shelters.map((shelter, index) => (
+                {currentItems.map((shelter, index) => (
                     <li
-                        key={index}
+                        key={shelter.index}
                         style={{ border: '1px solid #eee', marginBottom: '10px', padding: '10px', borderRadius: '4px' }}
                     >
                         <strong>{shelter.name}</strong> ({shelter.category2})
@@ -68,6 +62,24 @@ const ShelterList = () => {
                     </li>
                 ))}
             </ul>
+
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '20px' }}>
+                <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
+                    이전
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+                    <button
+                        key={number}
+                        onClick={() => setCurrentPage(number)}
+                        style={{ fontWeight: currentPage === number ? 'bold' : 'normal' }}
+                    >
+                        {number}
+                    </button>
+                ))}
+                <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}>
+                    다음
+                </button>
+            </div>
         </div>
     );
 };
